@@ -2,9 +2,9 @@
 
 Building with AI shouldn't be difficult, and AI Agents does its best to make it easy to build with AI inside of Laravel.
 
-Spend more time writing code you care about, just provide comments and let the system take care of the rest!
+✍️ Spend more time writing code you care about, just provide comments and let the system take care of the rest!
 
-Agents are highly composable 📦. Simply include the trait you need to give your AI the right capabilities for the job.
+📦 Agents are highly composable . Simply include the trait you need to give your AI the right capabilities for the job.
 
 ```php
 class TextingAgent extends BaseAgent {
@@ -17,7 +17,7 @@ class TextingAgent extends BaseAgent {
 }
 ```
 
-Need custom functionality or have an idea for a new AgentTrait? Create your own! Just follow the comment structure and the system will do the rest to ensure the AI understand and can use your functions!
+🔧 Need custom functionality or have an idea for a new AgentTrait? Create your own! Just follow the comment structure and the system will do the rest to ensure the AI understand and can use your functions!
 
 ```php
 /**
@@ -32,7 +32,7 @@ public function add(int $a, int $b): int {
 ```
 
 
-Create a new AI Agent in <20 lines of code!
+🚀 Create a new AI Agent in <20 lines of code!
 
 # Table of Contents
 - [🔧 Setup](#-setup)
