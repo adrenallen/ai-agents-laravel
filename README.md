@@ -1,4 +1,5 @@
 # AI Agents for Laravel
+[![Latest Stable Version](http://poser.pugx.org/adrenallen/ai-agents-laravel/v)](https://packagist.org/packages/adrenallen/ai-agents-laravel)   [![License](http://poser.pugx.org/adrenallen/ai-agents-laravel/license)](https://packagist.org/packages/adrenallen/ai-agents-laravel) [![PHP Version Require](http://poser.pugx.org/adrenallen/ai-agents-laravel/require/php)](https://packagist.org/packages/adrenallen/ai-agents-laravel)
 
 Building with AI shouldn't be difficult, and AI Agents does its best to make it easy to build with AI inside of Laravel.
 
