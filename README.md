@@ -2,7 +2,7 @@
 
 Building AI Agents shouldn't be difficult. This library does its best to make it easy to build AI Agents that can be used in Laravel. It is built to be agnostic of the LLM, but not so abstracted that it's difficult to follow.
 
-Write PHP functions, leave PHPDoc comments, and the system handles interfacing with the LLM!
+Write PHP functions, leave PHPDoc comments, and the system handles the rest!
 
 Create a new AI Agent in <20 lines of code!
 
