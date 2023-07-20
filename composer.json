@@ -1,6 +1,6 @@
 {
     "name": "adrenallen/ai-agents-laravel",
-    "description": "A package to build AI Agents",
+    "description": "A package to build AI Agents on top of Laravel",
     "keywords": ["laravel", "ai", "chatgpt"],
     "type": "library",
     "license": "MIT",

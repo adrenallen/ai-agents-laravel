@@ -2,15 +2,17 @@
 
 Building AI Agents shouldn't be difficult. This library does its best to make it easy to build AI Agents that can be used in Laravel. It is built to be agnostic of the LLM, but not so abstracted that it's difficult to follow.
 
-- [AI Agents for Laravel](#ai-agents-for-laravel)
-  - [🔧 Setup](#-setup)
-  - [👨‍💻 Usage](#-usage)
-    - [In Console/Testing](#in-consoletesting)
-    - [In Code](#in-code)
-  - [🤖 Creating an agent](#-creating-an-agent)
-    - [Defining an agent function](#defining-an-agent-function)
-  - [🧰 Agent Traits](#-agent-traits)
-  - [📝 Chat Models](#-chat-models)
+- [🔧 Setup](#-setup)
+- [👨‍💻 Usage](#-usage)
+  - [In Console/Testing](#in-consoletesting)
+  - [In Code](#in-code)
+- [🤖 Creating a new agent](#-creating-a-new-agent)
+  - [Defining an agent function](#defining-an-agent-function)
+- [🧰 Agent Traits](#-agent-traits)
+- [📝 Chat Models](#-chat-models)
+  - [Currently Supported](#currently-supported)
+  - [Adding a new chat model](#adding-a-new-chat-model)
+- [❤️ Contributing](#️-contributing)
 
 ## 🔧 Setup 
 
@@ -49,7 +51,7 @@ $agent->ask("Hello, is this thing on?"); // Yes, I'm here. How can I assist you 
 ```
 
 
-## 🤖 Creating an agent 
+## 🤖 Creating a new agent 
 To create a new agent you will want to extend the `BaseAgent` class and define any additional functionality.
 
 The `getAgentDuty` function is the pre-prompt that is passed to the chat model. This should describe how you want the agent to think and act.
@@ -111,4 +113,14 @@ It is highly encouraged that you place re-usable functions in a trait, and then 
 
 
 ## 📝 Chat Models
+
+### Currently Supported
+- GPT-3.5-turbo
+- GPT-4
+- ??? More soon...
+
+### Adding a new chat model
 New models can be added by extending `AbstractChatModel`. This class provides the basic functionality required to interact with the chat model.
+
+## ❤️ Contributing
+Opening new issues is encouraged if you have any questions, issues, or ideas. Pull requests are also welcome!
