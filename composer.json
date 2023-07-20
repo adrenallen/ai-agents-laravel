@@ -1,0 +1,31 @@
+{
+    "name": "adrenallen/ai-agents-laravel",
+    "description": "A package to build AI Agents",
+    "keywords": ["laravel", "ai", "chatgpt"],
+    "type": "library",
+    "license": "MIT",
+    "autoload": {
+        "psr-4": {
+            "Adrenallen\\AiAgentsLaravel\\": "src/"
+        }
+    },
+    "authors": [
+        {
+            "name": "Garrett",
+            "email": "garrett@userdefined.io"
+        }
+    ],
+    "require": {
+        "php": "^7.4|^8.0",
+        "openai-php/client": "^0.6.3",
+        "twilio/sdk": "^7.5",
+        "guzzlehttp/guzzle": "^7.2"
+    },
+    "extra": {
+        "laravel": {
+            "providers": [
+                "Adrenallen\\AiAgentsLaravel\\AiAgentsLaravelServiceProvider"
+            ]
+        }
+    }
+}
