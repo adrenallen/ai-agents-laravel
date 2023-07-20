@@ -1,11 +1,40 @@
 # AI Agents for Laravel
 
-Building AI Agents shouldn't be difficult. This library does its best to make it easy to build AI Agents that can be used in Laravel. It is built to be agnostic of the LLM, but not so abstracted that it's difficult to follow.
+Building with AI shouldn't be difficult, and AI Agents does its best to make it easy to build with AI inside of Laravel.
 
-Write PHP functions, leave PHPDoc comments, and the system handles the rest!
+Spend more time writing code you care about, just provide comments and let the system take care of the rest!
+
+Agents are highly composable 📦. Simply include the trait you need to give your AI the right capabilities for the job.
+
+```php
+class TextingAgent extends BaseAgent {
+
+    use \Adrenallen\AiAgentsLaravel\AgentTraits\SMSTrait; // Access to send SMS via Twilio, all handled automatically
+
+    public function getAgentDuty(): string {
+        return "You are a helpful assistant";   // Pre-prompt
+    }
+}
+```
+
+Need custom functionality or have an idea for a new AgentTrait? Create your own! Just follow the comment structure and the system will do the rest to ensure the AI understand and can use your functions!
+
+```php
+/**
+* @aiagent-description Adds two numbers together
+* @param int $a
+* @param int $b
+* @return int
+*/
+public function add(int $a, int $b): int {
+    return $a + $b;
+}
+```
+
 
 Create a new AI Agent in <20 lines of code!
 
+# Table of Contents
 - [🔧 Setup](#-setup)
 - [👨‍💻 Usage](#-usage)
   - [In Console/Testing](#in-consoletesting)
