@@ -130,6 +130,10 @@ class ChatGPT extends AbstractChatModel {
     // a new context that is under the max tokens count
     private function getTokenLimitedContext($context, $maxTokens = 3500) {
 
+        if (count($context) < 1) {
+            return $context;
+        }
+
         $provider = new EncoderProvider();
 
         $encoder = $provider->getForModel($this->model);
