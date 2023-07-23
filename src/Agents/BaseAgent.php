@@ -16,6 +16,7 @@ use Adrenallen\AiAgentsLaravel\ChatModels\ChatModelResponse;
 class BaseAgent {
 
     public $chatModel;
+    public int $maxFunctionCalls = 10;  //max number of function loops that can occur without more user input.
 
     function __construct($chatModel) {
         $this->chatModel = $chatModel;
@@ -31,10 +32,20 @@ class BaseAgent {
     }
 
     public function ask($message) : string {
+        $this->functionCallLoops = 0;   //new question, so reset the max function loop
         return $this->parseModelResponse($this->chatModel->sendUserMessage($message));
     }
 
+    private $functionCallLoops = 0;
     private function parseModelResponse(ChatModelResponse $response) : string {
+        $this->functionCallLoops++;
+
+        if ($this->functionCallLoops > $this->maxFunctionCalls){
+            // TODO - Optionall this could send a message to the system saying
+            // it must ask the user for approval to continue?
+            throw new \Exception("Too many function calls have occurred in a row (" . $this->maxFunctionCalls . "). Breaking the loop. Please try again.");
+        }
+
         if ($response->error){
             throw new \Exception($response->error);
         }
