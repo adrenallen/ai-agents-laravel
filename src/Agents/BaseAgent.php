@@ -58,7 +58,7 @@ class BaseAgent {
             $functionResult = "";
             try {
                 if (!method_exists($this, $functionName)){
-                    $functionResult = "Function '". $functionName . "' does not exist. You may only use functions that have been defined.";
+                    $functionResult = "Function '". $functionName . "' does not exist.";
                 } else {
                     $functionResult = call_user_func_array([$this, $functionName], (array)json_decode($functionArgs));
                 }
