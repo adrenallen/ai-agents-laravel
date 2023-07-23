@@ -23,6 +23,8 @@ class BaseAgent {
 
         // Set the model to have this agents functions now
         $this->chatModel->setFunctions($this->getAgentFunctions());
+        $this->chatModel->sendSystemMessage($this->getAgentDuty());
+        print_r("Asking this question for kicking it off" . $this->getAgentDuty());
     }
 
     // A desription of what this agent is responsible for
