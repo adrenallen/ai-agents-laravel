@@ -3,6 +3,8 @@
 namespace Adrenallen\AiAgentsLaravel\ChatModels;
 
 use OpenAI;
+use Yethee\Tiktoken\EncoderProvider;
+
 use Adrenallen\AiAgentsLaravel\Agents\AgentFunction;
 
 class ChatGPT extends AbstractChatModel {
@@ -58,10 +60,10 @@ class ChatGPT extends AbstractChatModel {
     protected function sendMessage($messageObj) : ChatModelResponse{
         $result = $this->client->chat()->create([
             'model' => $this->model,
-            'messages' => [
+            'messages' => $this->getTokenLimitedContext([
                 ...$this->context,
                 $messageObj,
-            ],
+            ]),
             'functions' => $this->functions,
         ]);
 
@@ -120,6 +122,35 @@ class ChatGPT extends AbstractChatModel {
                 'required' => $function->requiredParameters,
             ]
         ];
+    }
+
+
+
+    // Given a context, and a max token count, it returns 
+    // a new context that is under the max tokens count
+    private function getTokenLimitedContext($context, $maxTokens = 3500) {
+
+        $provider = new EncoderProvider();
+
+        $encoder = $provider->getForModel($this->model);
+        
+        $newContext = [];
+        $tokenUsage = 0;
+        
+        // Go through context from newest first, dropping oldest ones off
+        foreach(array_reverse($context) as $msg) {
+            $tokens = $encoder->encode($msg['content']);
+            if ($tokenUsage + count($tokens) > $maxTokens) {
+                break; //we have max tokens so break out and return
+            }
+
+            $newContext[] = $msg;
+            $tokenUsage = $tokenUsage + count($tokens);
+        }
+
+        //reverse so that it's chronological order again
+        //since we went backwards above
+        return array_reverse($newContext);  
     }
 
 

@@ -19,13 +19,19 @@
         "php": "^7.4|^8.0",
         "openai-php/client": "^0.6.3",
         "twilio/sdk": "^7.5",
-        "guzzlehttp/guzzle": "^7.2"
+        "guzzlehttp/guzzle": "^7.2",
+        "yethee/tiktoken": "^0.1.2"
     },
     "extra": {
         "laravel": {
             "providers": [
                 "Adrenallen\\AiAgentsLaravel\\AiAgentsLaravelServiceProvider"
             ]
+        }
+    },
+    "config": {
+        "allow-plugins": {
+            "php-http/discovery": true
         }
     }
 }
