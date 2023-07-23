@@ -129,7 +129,7 @@ class ChatGPT extends AbstractChatModel {
     // Given a context, and a max token count, it returns 
     // a new context that is under the max tokens count
     private function getTokenLimitedContext($context, $maxTokens = 3500) {
-
+            
         if (count($context) < 1) {
             return $context;
         }
@@ -140,17 +140,26 @@ class ChatGPT extends AbstractChatModel {
         
         $newContext = [];
         $tokenUsage = 0;
-        
-        // Go through context from newest first, dropping oldest ones off
-        foreach(array_reverse($context) as $msg) {
-            $tokens = $encoder->encode($msg['content']);
-            if ($tokenUsage + count($tokens) > $maxTokens) {
-                break; //we have max tokens so break out and return
-            }
 
-            $newContext[] = $msg;
-            $tokenUsage = $tokenUsage + count($tokens);
+        $msg = 'for debug';
+        try {
+            // Go through context from newest first, dropping oldest ones off
+            foreach(array_reverse($context) as $msg) {
+                $tokens = $encoder->encode($msg['content']);
+                if ($tokenUsage + count($tokens) > $maxTokens) {
+                    break; //we have max tokens so break out and return
+                }
+
+                $newContext[] = $msg;
+                $tokenUsage = $tokenUsage + count($tokens);
+            }
+        } catch (\Throwable $e) {
+            print_r($context);
+            print_r(array_reverse($context));
+            print_r($msg);
         }
+        
+        
 
         //reverse so that it's chronological order again
         //since we went backwards above
