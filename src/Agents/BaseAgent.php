@@ -57,7 +57,12 @@ class BaseAgent {
             
             $functionResult = "";
             try {
-                $functionResult = call_user_func_array([$this, $functionName], (array)json_decode($functionArgs));
+                if (!method_exists($this, $functionName)){
+                    $functionResult = "Function '". $functionName . "' does not exist. You may only use functions that have been defined.";
+                } else {
+                    $functionResult = call_user_func_array([$this, $functionName], (array)json_decode($functionArgs));
+                }
+                
             } catch (\Throwable $e) {
                 $functionResult = "An error occurred while running the function " 
                     . $functionName 
