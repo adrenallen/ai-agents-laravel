@@ -17,7 +17,7 @@ use Adrenallen\AiAgentsLaravel\Agents\AgentFunction;
  */
 abstract class AbstractChatModel {
 
-    public $history = [];
+    public $context = [];   //running context that is sent to model for completions
     protected $functions = [];  // list of functions that the agent is allowed to use
 
 
@@ -48,13 +48,13 @@ abstract class AbstractChatModel {
 
 
     /**
-     * Add a new message to the history
+     * Add a new message to the context history
      *
      * @param [type] $message
      * @return void
      */
-    public function addHistory($message) {
-        $this->history[] = $message;
+    public function recordContext($message) {
+        $this->context[] = $message;
     }
 
 

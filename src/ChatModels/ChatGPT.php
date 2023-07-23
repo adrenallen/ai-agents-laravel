@@ -11,10 +11,10 @@ class ChatGPT extends AbstractChatModel {
     private $client;
 
     // class constructor
-    public function __construct($model = 'gpt-3.5-turbo', $history = []) {
+    public function __construct($model = 'gpt-3.5-turbo', $context = []) {
         $this->model = $model;
         $this->client = OpenAI::client(config('openai.api_key'));
-        $this->history = $history;
+        $this->context = $context;
     }
 
     /**
@@ -59,7 +59,7 @@ class ChatGPT extends AbstractChatModel {
         $result = $this->client->chat()->create([
             'model' => $this->model,
             'messages' => [
-                ...$this->history,
+                ...$this->context,
                 $messageObj,
             ],
             'functions' => $this->functions,
@@ -68,8 +68,8 @@ class ChatGPT extends AbstractChatModel {
         $response = $result->choices[0]->message;
 
 
-        $this->addHistory($messageObj);
-        $this->addHistory($response->toArray());
+        $this->recordContext($messageObj);
+        $this->recordContext($response->toArray());
 
         
         // TODO - check if the $result->finishReason == `function_call` and if so then
