@@ -48,6 +48,15 @@ abstract class AbstractChatModel {
 
 
     /**
+     * Set the pre-prompt message for the model
+     * You may not want to actually send this but instead plug it in as the first message before the user message
+     *
+     * @param string $message
+     * @return void
+     */
+    abstract public function setPrePrompt(string $message);
+
+    /**
      * Add a new message to the context history
      *
      * @param [type] $message

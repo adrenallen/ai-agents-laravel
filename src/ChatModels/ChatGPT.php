@@ -78,6 +78,14 @@ class ChatGPT extends AbstractChatModel {
         return new ChatModelResponse($response->content, (array) $response->functionCall, null, ['usage' => $result->usage]);
     }
 
+    // Just record this as the first message in the context
+    // so that the bot understands but doesnt have to respond
+    public function setPrePrompt(string $message) {
+        $this->recordContext(
+            ['role' => 'system', 'content' => $message]
+        )
+    }
+
     /*
     * Converts a function from an AgentFunction into
     * a form that open ai accepts like below
