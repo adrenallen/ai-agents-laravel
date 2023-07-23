@@ -146,7 +146,7 @@ class ChatGPT extends AbstractChatModel {
             $tokens = $encoder->encode((string) $msg['content']);
             
             // If there is a function call then add those tokens too
-            if ($msg['function_call']) {
+            if (array_key_exists('function_call', $msg)) {
                 $tokens = [...$tokens, $encoder->encode((string) $msg['function_call'])];
             }
 
