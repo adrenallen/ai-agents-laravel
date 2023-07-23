@@ -17,20 +17,14 @@ class BaseAgent {
 
     public $chatModel;
     public int $maxFunctionCalls = 10;  //max number of function loops that can occur without more user input.
+    public string $prePrompt = "You are a helpful generalist assistant.";
 
     function __construct($chatModel) {
         $this->chatModel = $chatModel;
 
         // Set the model to have this agents functions now
         $this->chatModel->setFunctions($this->getAgentFunctions());
-        $this->chatModel->sendSystemMessage($this->getAgentDuty());
-        print_r("Asking this question for kicking it off" . $this->getAgentDuty());
-    }
-
-    // A desription of what this agent is responsible for
-    // this is fed to the chat model to give it context on what to do
-    public function getAgentDuty(): string {
-        return "You are a helpful generalist assistant.";
+        $this->chatModel->sendSystemMessage($this->prePrompt);
     }
 
     public function ask($message) : string {
