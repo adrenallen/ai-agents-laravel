@@ -144,6 +144,12 @@ class ChatGPT extends AbstractChatModel {
         // Go through context from newest first, dropping oldest ones off
         foreach(array_reverse($context) as $msg) {
             $tokens = $encoder->encode((string) $msg['content']);
+            
+            // If there is a function call then add those tokens too
+            if ($msg['function_call']) {
+                $tokens = [...$tokens, $encoder->encode((string) $msg['function_call'])];
+            }
+
             if ($tokenUsage + count($tokens) > $maxTokens) {
                 break; //we have max tokens so break out and return
             }
