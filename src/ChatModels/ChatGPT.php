@@ -83,7 +83,7 @@ class ChatGPT extends AbstractChatModel {
     public function setPrePrompt(string $message) {
         $this->recordContext(
             ['role' => 'system', 'content' => $message]
-        )
+        );
     }
 
     /*
