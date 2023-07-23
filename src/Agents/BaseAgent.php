@@ -53,7 +53,6 @@ class BaseAgent {
                     . ":'" . str($e) . "'. You may need to ask the user for more information.";
             }
 
-            //print_r((array)json_decode($functionArgs));
             return $this->parseModelResponse(
                 $this->chatModel->sendFunctionResult(
                     $functionName,
