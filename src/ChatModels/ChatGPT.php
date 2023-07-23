@@ -65,6 +65,8 @@ class ChatGPT extends AbstractChatModel {
             'functions' => $this->functions,
         ]);
 
+        print_r($result->usage);
+
         $response = $result->choices[0]->message;
 
 
