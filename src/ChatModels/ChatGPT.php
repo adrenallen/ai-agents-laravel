@@ -3,6 +3,8 @@
 namespace Adrenallen\AiAgentsLaravel\ChatModels;
 
 use OpenAI;
+use Yethee\Tiktoken\EncoderProvider;
+
 use Adrenallen\AiAgentsLaravel\Agents\AgentFunction;
 
 class ChatGPT extends AbstractChatModel {
@@ -58,23 +60,30 @@ class ChatGPT extends AbstractChatModel {
     protected function sendMessage($messageObj) : ChatModelResponse{
         $result = $this->client->chat()->create([
             'model' => $this->model,
-            'messages' => [
+            'messages' => $this->getTokenLimitedContext([
                 ...$this->context,
                 $messageObj,
-            ],
+            ]),
             'functions' => $this->functions,
         ]);
 
         $response = $result->choices[0]->message;
-
 
         $this->recordContext($messageObj);
         $this->recordContext($response->toArray());
 
         
         // TODO - check if the $result->finishReason == `function_call` and if so then
-        // pass in the function call, otherwise dont
-        return new ChatModelResponse($response->content, (array) $response->functionCall);
+        // pass in the function call, otherwise dont?
+        return new ChatModelResponse($response->content, (array) $response->functionCall, null, ['usage' => $result->usage]);
+    }
+
+    // Just record this as the first message in the context
+    // so that the bot understands but doesnt have to respond
+    public function setPrePrompt(string $message) {
+        $this->recordContext(
+            ['role' => 'system', 'content' => $message]
+        );
     }
 
     /*
@@ -121,6 +130,45 @@ class ChatGPT extends AbstractChatModel {
                 'required' => $function->requiredParameters,
             ]
         ];
+    }
+
+
+
+    // Given a context, and a max token count, it returns 
+    // a new context that is under the max tokens count
+    private function getTokenLimitedContext($context, $maxTokens = 3500) {
+            
+        if (count($context) < 1) {
+            return $context;
+        }
+
+        $provider = new EncoderProvider();
+
+        $encoder = $provider->getForModel($this->model);
+        
+        $newContext = [];
+        $tokenUsage = 0;
+
+        // Go through context from newest first, dropping oldest ones off
+        foreach(array_reverse($context) as $msg) {
+            $tokens = $encoder->encode((string) $msg['content']);
+            
+            // If there is a function call then add those tokens too
+            if (array_key_exists('function_call', $msg)) {
+                $tokens = [...$tokens, $encoder->encode(json_encode($msg['function_call']))];
+            }
+
+            if ($tokenUsage + count($tokens) > $maxTokens) {
+                break; //we have max tokens so break out and return
+            }
+
+            $newContext[] = $msg;
+            $tokenUsage = $tokenUsage + count($tokens);
+        }
+    
+        //reverse so that it's chronological order again
+        //since we went backwards above
+        return array_reverse($newContext);  
     }
 
 

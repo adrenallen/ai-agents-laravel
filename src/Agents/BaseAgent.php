@@ -16,25 +16,32 @@ use Adrenallen\AiAgentsLaravel\ChatModels\ChatModelResponse;
 class BaseAgent {
 
     public $chatModel;
+    public int $maxFunctionCalls = 10;  //max number of function loops that can occur without more user input.
+    public string $prePrompt = "You are a helpful generalist assistant.";
 
     function __construct($chatModel) {
         $this->chatModel = $chatModel;
 
         // Set the model to have this agents functions now
         $this->chatModel->setFunctions($this->getAgentFunctions());
-    }
-
-    // A desription of what this agent is responsible for
-    // this is fed to the chat model to give it context on what to do
-    public function getAgentDuty(): string {
-        return "You are a helpful generalist assistant.";
+        $this->chatModel->setPrePrompt($this->prePrompt);
     }
 
     public function ask($message) : string {
+        $this->functionCallLoops = 0;   //new question, so reset the max function loop
         return $this->parseModelResponse($this->chatModel->sendUserMessage($message));
     }
 
+    private $functionCallLoops = 0;
     private function parseModelResponse(ChatModelResponse $response) : string {
+        $this->functionCallLoops++;
+
+        if ($this->functionCallLoops > $this->maxFunctionCalls){
+            // TODO - Optionall this could send a message to the system saying
+            // it must ask the user for approval to continue?
+            throw new \Exception("Too many function calls have occurred in a row (" . $this->maxFunctionCalls . "). Breaking the loop. Please try again.");
+        }
+
         if ($response->error){
             throw new \Exception($response->error);
         }
@@ -46,14 +53,19 @@ class BaseAgent {
             
             $functionResult = "";
             try {
-                $functionResult = call_user_func_array([$this, $functionName], (array)json_decode($functionArgs));
+                if (!method_exists($this, $functionName)){
+                    $functionResult = "Function '". $functionName . "' does not exist.";
+                } else {
+                    $functionResult = call_user_func_array([$this, $functionName], (array)json_decode($functionArgs));
+                }
+                
             } catch (\Throwable $e) {
+                $errorMessage = $e->getMessage();
                 $functionResult = "An error occurred while running the function " 
                     . $functionName 
-                    . ":'" . str($e) . "'. You may need to ask the user for more information.";
+                    . ":'" . str($errorMessage) . "'. You may need to ask the user for more information.";
             }
 
-            //print_r((array)json_decode($functionArgs));
             return $this->parseModelResponse(
                 $this->chatModel->sendFunctionResult(
                     $functionName,
