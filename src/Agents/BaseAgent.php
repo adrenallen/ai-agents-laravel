@@ -24,6 +24,16 @@ class BaseAgent {
 
         // Set the model to have this agents functions now
         $this->chatModel->setFunctions($this->getAgentFunctions());
+    }
+
+    // Returns an agent that is already pre-prompted
+    static public function newAgentWithPrePrompt($chatModel) : BaseAgent {
+        $a = new BaseAgent($chatModel);
+        $a->prePrompt();
+        return $a;
+    }
+
+    public function prePrompt() {
         $this->chatModel->setPrePrompt($this->prePrompt);
     }
 
