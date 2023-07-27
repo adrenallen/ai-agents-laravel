@@ -33,6 +33,8 @@ class BaseAgent {
         return $a;
     }
 
+    // Records the pre-prompt message to the chat model context
+    // does not ask for a completion
     public function prePrompt() {
         $this->chatModel->setPrePrompt($this->prePrompt);
     }
