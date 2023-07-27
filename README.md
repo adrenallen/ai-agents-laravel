@@ -82,7 +82,7 @@ The verbose way to create an agent is to create a chat model, and pass that to a
 
 ```php
 $chat = new \Adrenallen\AiAgentsLaravel\ChatModels\ChatGPT();
-$agent = new \Adrenallen\AiAgentsLaravel\Agents\TestingAgent($chat);
+$agent = new \Adrenallen\AiAgentsLaravel\Agents\TestingAgent::newWithPrePrompt($chat); // Ensures the agent gets a pre-prompt at creation
 $agent->ask("Hello, is this thing on?"); // Yes, I'm here. How can I assist you today?
 ```
 
