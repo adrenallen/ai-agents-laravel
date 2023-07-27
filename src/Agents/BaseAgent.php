@@ -41,7 +41,12 @@ class BaseAgent {
 
     public function ask($message) : string {
         $this->functionCallLoops = 0;   //new question, so reset the max function loop
-        return $this->parseModelResponse($this->chatModel->sendUserMessage($message));
+        try {
+            return $this->parseModelResponse($this->chatModel->sendUserMessage($message));
+        } catch (TooManyFunctionCallsException $e) {
+            return $this->ask("You have run " . $this->maxFunctionCalls . " function calls without user input. You must ask the user if they would like you to proceed with calls before you can continue.");
+        }
+        
     }
 
     private $functionCallLoops = 0;
@@ -51,7 +56,7 @@ class BaseAgent {
         if ($this->functionCallLoops > $this->maxFunctionCalls){
             // TODO - Optionall this could send a message to the system saying
             // it must ask the user for approval to continue?
-            throw new \Exception("Too many function calls have occurred in a row (" . $this->maxFunctionCalls . "). Breaking the loop. Please try again.");
+            throw new TooManyFunctionCallsException("Too many function calls have occurred in a row (" . $this->maxFunctionCalls . "). Breaking the loop. Please try again.");
         }
 
         if ($response->error){
@@ -111,5 +116,10 @@ class BaseAgent {
         }
         return $allowedFunctions;
     }
+
+}
+
+
+class TooManyFunctionCallsException extends \Exception {
 
 }
