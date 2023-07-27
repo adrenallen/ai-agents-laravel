@@ -28,7 +28,7 @@ class BaseAgent {
 
     // Returns an agent that is already pre-prompted
     static public function newAgentWithPrePrompt($chatModel) : BaseAgent {
-        $a = new BaseAgent($chatModel);
+        $a = new self($chatModel);
         $a->prePrompt();
         return $a;
     }
