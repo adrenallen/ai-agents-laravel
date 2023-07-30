@@ -52,7 +52,7 @@ Install via composer
 
 `composer require adrenallen/ai-agents-laravel`
 
-You will need to publish the configuration files and fill out details based on the features you wish to use. You can publis the config files by running the following command:
+You will need to publish the configuration files and fill out details based on the features you wish to use. You can publish the config files by running the following command:
 
 `php artisan vendor:publish --provider="Adrenallen\AiAgentsLaravel\AiAgentsLaravelServiceProvider"`
 
