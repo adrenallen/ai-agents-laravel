@@ -1,5 +1,5 @@
 # AI Agents for Laravel
-[![Latest Stable Version](http://poser.pugx.org/adrenallen/ai-agents-laravel/v)](https://packagist.org/packages/adrenallen/ai-agents-laravel)   [![License](http://poser.pugx.org/adrenallen/ai-agents-laravel/license)](https://packagist.org/packages/adrenallen/ai-agents-laravel) [![PHP Version Require](http://poser.pugx.org/adrenallen/ai-agents-laravel/require/php)](https://packagist.org/packages/adrenallen/ai-agents-laravel)
+[![Latest Stable Version](http://poser.pugx.org/adrenallen/ai-agents-laravel/v)](https://packagist.org/packages/adrenallen/ai-agents-laravel) [![Latest Unstable Version](http://poser.pugx.org/adrenallen/ai-agents-laravel/v/unstable)](https://packagist.org/packages/adrenallen/ai-agents-laravel)  [![License](http://poser.pugx.org/adrenallen/ai-agents-laravel/license)](https://packagist.org/packages/adrenallen/ai-agents-laravel) [![PHP Version Require](http://poser.pugx.org/adrenallen/ai-agents-laravel/require/php)](https://packagist.org/packages/adrenallen/ai-agents-laravel)
 
 Building with AI shouldn't be difficult, and AI Agents does its best to make it easy to build with AI inside of Laravel.
 
@@ -52,7 +52,7 @@ Install via composer
 
 `composer require adrenallen/ai-agents-laravel`
 
-You will need to publish the configuration files and fill out details based on the features you wish to use. You can publis the config files by running the following command:
+You will need to publish the configuration files and fill out details based on the features you wish to use. You can publish the config files by running the following command:
 
 `php artisan vendor:publish --provider="Adrenallen\AiAgentsLaravel\AiAgentsLaravelServiceProvider"`
 
