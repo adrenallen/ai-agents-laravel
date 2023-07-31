@@ -58,14 +58,19 @@ class ChatGPT extends AbstractChatModel {
      * @param [type] $messageObj
      */
     protected function sendMessage($messageObj) : ChatModelResponse{
-        $result = $this->client->chat()->create([
+        $options = [
             'model' => $this->model,
             'messages' => $this->getTokenLimitedContext([
                 ...$this->context,
                 $messageObj,
-            ]),
-            'functions' => $this->functions,
-        ]);
+            ])
+        ];
+
+        if (count($this->functions) > 0) {
+            $options['functions'] = $this->functions;
+        }
+
+        $result = $this->client->chat()->create($options);
 
         $response = $result->choices[0]->message;
 
