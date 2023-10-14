@@ -80,7 +80,7 @@ class BaseAgent {
                 $errorMessage = $e->getMessage();
                 $functionResult = "An error occurred while running the function " 
                     . $functionName 
-                    . ":'" . str($errorMessage);
+                    . ":'" . strval($errorMessage);
                     //. "'. You may need to ask the user for more information.";
             }
 

@@ -11,12 +11,14 @@ class ChatGPT extends AbstractChatModel {
 
     private $model;
     private $client;
+    private $options;
 
     // class constructor
-    public function __construct($model = 'gpt-3.5-turbo', $context = []) {
+    public function __construct($model = 'gpt-3.5-turbo', $context = [], $options = []) {
         $this->model = $model;
         $this->client = OpenAI::client(config('openai.api_key'));
         $this->context = $context;
+        $this->options = $options;
     }
 
     /**
@@ -63,7 +65,8 @@ class ChatGPT extends AbstractChatModel {
             'messages' => $this->getTokenLimitedContext([
                 ...$this->context,
                 $messageObj,
-            ])
+            ]),
+            ...$this->options,
         ];
 
         if (count($this->functions) > 0) {
