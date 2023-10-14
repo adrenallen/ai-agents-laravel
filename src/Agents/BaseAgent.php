@@ -52,7 +52,7 @@ class BaseAgent {
     // Did the agent call a function in the last ask loop?
     // this is not saved, so only applies to current in-memory instance
     public function didAskCallFunction() : bool {
-        return $this->functionCallLoops > 0;
+        return $this->functionCallLoops > 1; // The model will always call once, if more than 1 then the agent called a function
     }
 
     private $functionCallLoops = 0;
