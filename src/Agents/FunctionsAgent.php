@@ -14,7 +14,7 @@ class FunctionsAgent extends BaseAgent {
     // before returning
 
     // The message to send to the agent if it fails to call a function
-    public $functionRequiredMessage = "You must call a function before you can return.";
+    public string $functionRequiredMessage = "You must call a function before you can return.";
 
     //override php function from parent
     public function ask($message) : string {
