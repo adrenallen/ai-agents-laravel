@@ -17,7 +17,7 @@ class FunctionsAgent extends BaseAgent {
     public function ask($message) : string {
         $result = parent::ask($message);
         if (!$this->didAskCallFunction()) {
-            return $this->ask($this->functionRequiredMessage);
+            return $this->ask($this->getFunctionRequiredMessage());
         }
         return $result;
     }
