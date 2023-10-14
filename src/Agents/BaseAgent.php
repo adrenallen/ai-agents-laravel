@@ -55,7 +55,7 @@ class BaseAgent {
         return $this->functionCallLoops > 0;
     }
 
-    protected $functionCallLoops = 0;
+    private $functionCallLoops = 0;
     private function parseModelResponse(ChatModelResponse $response) : string {
         $this->functionCallLoops++;
 
