@@ -49,7 +49,13 @@ class BaseAgent {
         
     }
 
-    private $functionCallLoops = 0;
+    // Did the agent call a function in the last ask loop?
+    // this is not saved, so only applies to current in-memory instance
+    public function didAskCallFunction() : bool {
+        return $this->functionCallLoops > 0;
+    }
+
+    protected $functionCallLoops = 0;
     private function parseModelResponse(ChatModelResponse $response) : string {
         $this->functionCallLoops++;
 
