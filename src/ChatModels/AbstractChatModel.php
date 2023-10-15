@@ -64,7 +64,7 @@ abstract class AbstractChatModel {
     }
 
 
-    private function setFunctions($functions = []) {
+    public function setFunctions($functions = []) {
         // Parse the functions we get from AgentFunction into a format
         // the model can understand
         foreach($functions as $function) {
