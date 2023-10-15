@@ -13,17 +13,16 @@ class FunctionsAgent extends BaseAgent {
     // and tell the agent it must call a function
     // before returning
 
+    public string $functionRequiredMessage = "You must call a function before you can return.";
+
     //override php function from parent
     public function ask($message) : string {
         $result = parent::ask($message);
         if (!$this->didAskCallFunction()) {
-            return $this->ask($this->getFunctionRequiredMessage());
+            return $this->ask($this->functionRequiredMessage);
         }
         return $result;
     }
 
-    public function getFunctionRequiredMessage() : string {
-        return "You must call a function before you can return.";
-    }
 
 }
