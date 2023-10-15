@@ -98,6 +98,10 @@ class ChatGPT extends AbstractChatModel {
         $this->prePrompt = $message;        
     }
 
+    public function getPrePrompt() : string {
+        return $this->prePrompt;
+    }
+
     /*
     * Converts a function from an AgentFunction into
     * a form that open ai accepts like below
@@ -152,7 +156,7 @@ class ChatGPT extends AbstractChatModel {
     private function getTokenPreppedContext($context, $maxTokens = 8192) {
         if (count($context) < 1) {
             return [
-                ['role' => 'system', 'content' => $this->prePrompt],
+                ['role' => 'system', 'content' => $this->getPrePrompt()],
             ];
         }
 
@@ -169,7 +173,7 @@ class ChatGPT extends AbstractChatModel {
         $tokenUsage = 0;
 
         // add the token usage for the pre-prompt
-        $tokenUsage += count($encoder->encode((string) $this->prePrompt));
+        $tokenUsage += count($encoder->encode((string) $this->getPrePrompt()));
 
         // Go through context from newest first, dropping oldest ones off
         foreach(array_reverse($context) as $msg) {
@@ -190,7 +194,7 @@ class ChatGPT extends AbstractChatModel {
     
         // now we add the pre-prompt in so it's there!
         // this will get reversed below so it's first instead
-        $newContext[] = ['role' => 'system', 'content' => $this->prePrompt];
+        $newContext[] = ['role' => 'system', 'content' => $this->getPrePrompt()];
 
         //reverse so that it's chronological order again
         //since we went backwards above

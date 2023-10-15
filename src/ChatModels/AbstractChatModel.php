@@ -57,6 +57,13 @@ abstract class AbstractChatModel {
     abstract public function setPrePrompt(string $message);
 
     /**
+     * Get the pre-prompt message which will always be included in the context
+     *
+     * @return string
+     */
+    abstract public function getPrePrompt() : string;
+
+    /**
      * Add a new message to the context history
      *
      * @param [type] $message
