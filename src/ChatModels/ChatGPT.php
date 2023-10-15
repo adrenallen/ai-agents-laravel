@@ -11,20 +11,21 @@ class ChatGPT extends AbstractChatModel {
 
     private $model;
     private $client;
-    private $options;
-    private $prePrompt = "";
+    private $openAiOptions;
 
     // class constructor
     /**
      * @param string $model
      * @param array $context
-     * @param array $options
+     * @param array $openAiOptions
      */
-    public function __construct($model = 'gpt-3.5-turbo', $context = [], $options = []) {
+    public function __construct($context = [], $prePrompt = "", $functions = [], $model = 'gpt-3.5-turbo',  $openAiOptions = []) {
+
+        parent::__construct($context, $prePrompt, $functions);
         $this->model = $model;
         $this->client = OpenAI::client(config('openai.api_key'));
         $this->context = $context;
-        $this->options = $options;
+        $this->openAiOptions = $openAiOptions;
     }
 
     /**
@@ -72,7 +73,7 @@ class ChatGPT extends AbstractChatModel {
                 ...$this->context,
                 $messageObj,
             ]),
-            ...$this->options,
+            ...$this->openAiOptions,
         ];
 
         if (count($this->functions) > 0) {
@@ -90,16 +91,6 @@ class ChatGPT extends AbstractChatModel {
         // TODO - check if the $result->finishReason == `function_call` and if so then
         // pass in the function call, otherwise dont?
         return new ChatModelResponse($response->content, (array) $response->functionCall, null, ['usage' => $result->usage]);
-    }
-
-    // Just record this as the first message in the context
-    // so that the bot understands but doesnt have to respond
-    public function setPrePrompt(string $message) {
-        $this->prePrompt = $message;        
-    }
-
-    public function getPrePrompt() : string {
-        return $this->prePrompt;
     }
 
     /*
@@ -149,19 +140,18 @@ class ChatGPT extends AbstractChatModel {
     }
 
 
-
     // Given a context, and a max token count, it returns 
     // a new context that is under the max tokens count
     // This will also guarantee the pre-prompt is included
     private function getTokenPreppedContext($context, $maxTokens = 8192) {
         if (count($context) < 1) {
             return [
-                ['role' => 'system', 'content' => $this->getPrePrompt()],
+                ['role' => 'system', 'content' => $this->prePrompt],
             ];
         }
 
         // If the first message is a system message we assume its a prompt
-        if ($context[0]['role'] == 'system'){   
+        if ($context[0]['role'] == 'system') {   
             // call recursive but drop the first one
             return $this->getTokenPreppedContext(array_slice($context, 1), $maxTokens);
         }
@@ -173,7 +163,7 @@ class ChatGPT extends AbstractChatModel {
         $tokenUsage = 0;
 
         // add the token usage for the pre-prompt
-        $tokenUsage += count($encoder->encode((string) $this->getPrePrompt()));
+        $tokenUsage += count($encoder->encode((string) $this->prePrompt));
 
         // Go through context from newest first, dropping oldest ones off
         foreach(array_reverse($context) as $msg) {
@@ -194,7 +184,7 @@ class ChatGPT extends AbstractChatModel {
     
         // now we add the pre-prompt in so it's there!
         // this will get reversed below so it's first instead
-        $newContext[] = ['role' => 'system', 'content' => $this->getPrePrompt()];
+        $newContext[] = ['role' => 'system', 'content' => $this->prePrompt];
 
         //reverse so that it's chronological order again
         //since we went backwards above

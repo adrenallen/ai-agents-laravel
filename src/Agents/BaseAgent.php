@@ -22,21 +22,11 @@ class BaseAgent {
     function __construct($chatModel) {
         $this->chatModel = $chatModel;
 
-        // Set the model to have this agents functions now
+        // We have to set the pre-prompt now that we have the chat model
+        $this->chatModel->prePrompt = $this->prePrompt;
+
+        // Now set the functions for our agent as well
         $this->chatModel->setFunctions($this->getAgentFunctions());
-    }
-
-    // Returns an agent that is already pre-prompted
-    static public function newWithPrePrompt($chatModel) : BaseAgent {
-        $a = new static($chatModel);
-        $a->prePrompt();
-        return $a;
-    }
-
-    // Records the pre-prompt message to the chat model context
-    // does not ask for a completion
-    public function prePrompt() {
-        $this->chatModel->setPrePrompt($this->prePrompt);
     }
 
     public function ask($message) : string {
@@ -60,7 +50,7 @@ class BaseAgent {
         $this->functionCallLoops++;
 
         if ($this->functionCallLoops > $this->maxFunctionCalls){
-            // TODO - Optionall this could send a message to the system saying
+            // TODO - Optionally this could send a message to the system saying
             // it must ask the user for approval to continue?
             throw new TooManyFunctionCallsException("Too many function calls have occurred in a row (" . $this->maxFunctionCalls . "). Breaking the loop. Please try again.");
         }

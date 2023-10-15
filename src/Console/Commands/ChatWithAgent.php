@@ -25,8 +25,8 @@ class ChatWithAgent extends Command
      */
     public function handle()
     {
-        $agentClass = "\Adrenallen\AiAgentsLaravel\Agents\\" . $this->argument('agent');
-        $agent = $agentClass::newWithPrePrompt(new \Adrenallen\AiAgentsLaravel\ChatModels\ChatGPT());
+        $agentClass = new static("\Adrenallen\AiAgentsLaravel\Agents\\" . $this->argument('agent'));
+        $agent = new $agentClass(new \Adrenallen\AiAgentsLaravel\ChatModels\ChatGPT());
 
         $this->info($agentClass . " is now chatting with you.");
         $this->info("Send the message 'exit' to exit the chat.");

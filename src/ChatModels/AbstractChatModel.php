@@ -19,7 +19,14 @@ abstract class AbstractChatModel {
 
     public $context = [];   //running context that is sent to model for completions
     protected $functions = [];  // list of functions that the agent is allowed to use
+    public $prePrompt = "";
 
+
+    public function __construct($context = [], $prePrompt = "", $functions = []) {
+        $this->context = $context;
+        $this->prePrompt = $prePrompt;
+        $this->setFunctions($functions);
+    }
 
     abstract protected function convertFunctionsForModel(AgentFunction $function);
 
@@ -46,23 +53,6 @@ abstract class AbstractChatModel {
      */
     abstract public function sendUserMessage(string $message): ChatModelResponse;
 
-
-    /**
-     * Set the pre-prompt message for the model
-     * You may not want to actually send this but instead plug it in as the first message before the user message
-     *
-     * @param string $message
-     * @return void
-     */
-    abstract public function setPrePrompt(string $message);
-
-    /**
-     * Get the pre-prompt message which will always be included in the context
-     *
-     * @return string
-     */
-    abstract public function getPrePrompt() : string;
-
     /**
      * Add a new message to the context history
      *
@@ -74,8 +64,7 @@ abstract class AbstractChatModel {
     }
 
 
-
-    public function setFunctions($functions = []) {
+    private function setFunctions($functions = []) {
         // Parse the functions we get from AgentFunction into a format
         // the model can understand
         foreach($functions as $function) {
