@@ -71,11 +71,9 @@ You can type `exit` to exit the chat.
 
 ### In Code
 
-The quickest way to get an agent is to use the `newWithPrePrompt` function. This creates a new agent with the given chat model, and ensures the pre-prompt is fed into the bot.
-
 ```php
 $chat = new \Adrenallen\AiAgentsLaravel\ChatModels\ChatGPT();
-$agent = new \Adrenallen\AiAgentsLaravel\Agents\TestingAgent::newWithPrePrompt($chat); // Ensures the agent gets a pre-prompt at creation
+$agent = new \Adrenallen\AiAgentsLaravel\Agents\TestingAgent($chat); // Ensures the agent gets a pre-prompt at creation
 $agent->ask("Hello, is this thing on?"); // Yes, I'm here. How can I assist you today?
 ```
 
