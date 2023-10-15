@@ -80,6 +80,8 @@ $agent->ask("Hello, is this thing on?"); // Yes, I'm here. How can I assist you 
 ## 🤖 Creating a new agent 
 To create a new agent you will want to extend the `BaseAgent` class and define any additional functionality.
 
+**NOTE: If you want to require your agent to always call a function, you can extend the `FunctionsAgent` instead!**
+
 The `prePrompt` property is the pre-prompt that is passed to the chat model. This should describe how you want the agent to think and act.
 
 You can use traits under `AgentTraits` to pull in specific functionality you may need.
