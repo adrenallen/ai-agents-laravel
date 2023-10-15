@@ -68,7 +68,7 @@ class ChatGPT extends AbstractChatModel {
     protected function sendMessage($messageObj) : ChatModelResponse{
         $options = [
             'model' => $this->model,
-            'messages' => $this->getTokenLimitedContext([
+            'messages' => $this->getTokenPreppedContext([
                 ...$this->context,
                 $messageObj,
             ]),
