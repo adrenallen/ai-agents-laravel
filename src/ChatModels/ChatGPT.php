@@ -62,6 +62,37 @@ class ChatGPT extends AbstractChatModel {
     }
 
     /**
+     * records a "system" roled message to the model
+     *
+     * @param [type] $message
+     */
+    public function recordSystemMessage(string $message): void
+    {
+        $this->recordContext(['role' => 'system', 'content' => $message]);
+    }
+
+    /**
+     * records a "user" roled message to the model
+     *
+     * @param [type] $message
+     */
+    public function recordUserMessage(string $message): void
+    {
+        $this->recordContext(['role' => 'user', 'content' => $message]);
+    }
+
+    /**
+     * records a function result to the model
+     *
+     * @param string $functionName
+     * @param [type] $result
+     */
+    public function recordFunctionResult(string $functionName, $result): void
+    {
+        $this->recordContext(['role' => 'function', 'name' => $functionName, 'content' => $result]);
+    }
+
+    /**
      * sends a message to the open ai model and returns the message result
      *
      * @param [type] $messageObj

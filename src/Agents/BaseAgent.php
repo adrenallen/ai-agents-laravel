@@ -36,7 +36,6 @@ class BaseAgent {
         } catch (TooManyFunctionCallsException $e) {
             return $this->ask("You have run " . $this->maxFunctionCalls . " function calls without user input. You must ask the user if they would like you to proceed with calls before you can continue.");
         }
-        
     }
 
     // Did the agent call a function in the last ask loop?

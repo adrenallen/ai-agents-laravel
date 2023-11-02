@@ -54,7 +54,27 @@ abstract class AbstractChatModel {
     abstract public function sendUserMessage(string $message): ChatModelResponse;
 
     /**
+     * Records a "user" roled message to the model, without getting a response
+     * This will not get a response, but will simply add the message to the history
+     *
+     * @param string $message
+     */
+    abstract public function recordUserMessage(string $message): void;
+    
+    /**
+     * Records a "system" roled message to the model, without getting a response
+     */
+    abstract public function recordSystemMessage(string $message): void;
+
+    /**
+     * Records a function result to the model, without getting a response
+     */
+    abstract public function recordFunctionResult(string $functionName, $result): void;
+
+    /**
      * Add a new message to the context history
+     * The input SHOULD BE FORMATTED PROPERTLY
+     * USE `recordUserMessage` IF YOU ARE UNSURE
      *
      * @param [type] $message
      * @return void
