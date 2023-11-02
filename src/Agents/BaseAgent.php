@@ -38,6 +38,15 @@ class BaseAgent {
         }
     }
 
+    /**
+     * Records a "user" roled message to the model, without getting a response
+     *
+     * @param string $message
+     */
+    public function record($message) : void {
+        $this->chatModel->recordUserMessage($message);
+    }
+
     // Did the agent call a function in the last ask loop?
     // this is not saved, so only applies to current in-memory instance
     public function didAskCallFunction() : bool {
