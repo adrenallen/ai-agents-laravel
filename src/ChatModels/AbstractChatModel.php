@@ -72,6 +72,11 @@ abstract class AbstractChatModel {
     abstract public function recordFunctionResult(string $functionName, $result): void;
 
     /**
+     * Records a "assistant" roled message to the model, without getting a response
+     */
+    abstract public function recordAssistantMessage(string $message): void
+
+    /**
      * Add a new message to the context history
      * The input SHOULD BE FORMATTED PROPERTLY
      * USE `recordUserMessage` IF YOU ARE UNSURE
