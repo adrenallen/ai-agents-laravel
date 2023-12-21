@@ -1,1 +1,4 @@
 vendor
+*.code-workspace
+/.vscode
+.env
