@@ -6,7 +6,7 @@ use Yethee\Tiktoken\EncoderProvider;
 use Adrenallen\AiAgentsLaravel\Agents\AgentFunction;
 use Psr\Http\Message\ResponseInterface;
 
-class OctoML extends AbstractChatModel {
+class OctoAI extends AbstractChatModel {
 
     public $client;
 
@@ -15,7 +15,7 @@ class OctoML extends AbstractChatModel {
     public function __construct(public $context = [], public $prePrompt = "", $functions = [], $model = 'llama-2-70b-chat-fp16', $octoMLOptions = []) {
 
         parent::__construct($context, $prePrompt, $functions);
-        $this->client = new OctoMLClient(config('octoml.api_key'), $model, $octoMLOptions);
+        $this->client = new OctoAIClient(config('octoai.api_key'), $model, $octoMLOptions);
         $this->context = $context;
 
         // if there are functions, add to pre-prompt the functions the model has access to
@@ -121,7 +121,7 @@ class OctoML extends AbstractChatModel {
         
         // TODO - check if the $result->finishReason == `function_call` and if so then
         // pass in the function call, otherwise dont?
-        // OctoML returns a function call value even though its always empty
+        // OctoAI returns a function call value even though its always empty
         return new ChatModelResponse($response->content, (array) $response->functionCall, null, ['usage' => $result->usage]);
     }
 
@@ -262,7 +262,7 @@ class OctoML extends AbstractChatModel {
 }
 
 
-class OctoMLClient {
+class OctoAIClient {
 
     public function __construct(
         protected string $apiKey,
@@ -292,9 +292,9 @@ class OctoMLClient {
             return $parsedResponse;
         }
 
-        // TODO - make this a proper exception based on response from octoml
+        // TODO - make this a proper exception based on response from octoai
         // else throw an exception
-        throw new \Exception("Invalid response from OctoML: " . $response->getBody());
+        throw new \Exception("Invalid response from OctoAI: " . $response->getBody());
 
     }
 
