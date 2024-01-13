@@ -1,5 +1,6 @@
 <?php
 
+namespace Adrenallen\AiAgentsLaravel\ChatProviders;
 use Psr\Http\Message\ResponseInterface;
 
 class OctoAIClient {

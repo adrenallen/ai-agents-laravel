@@ -4,7 +4,7 @@ namespace Adrenallen\AiAgentsLaravel\ChatModels;
 
 use Yethee\Tiktoken\EncoderProvider;
 use Adrenallen\AiAgentsLaravel\Agents\AgentFunction;
-use OctoAIClient;
+use Adrenallen\AiAgentsLaravel\ChatProviders\OctoAIClient;
 use Psr\Http\Message\ResponseInterface;
 
 class OctoAIJson extends AbstractChatModel {
