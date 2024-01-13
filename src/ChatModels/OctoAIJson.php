@@ -7,7 +7,7 @@ use Adrenallen\AiAgentsLaravel\Agents\AgentFunction;
 use OctoAIClient;
 use Psr\Http\Message\ResponseInterface;
 
-class OctoAI extends AbstractChatModel {
+class OctoAIJson extends AbstractChatModel {
 
     public $client;
 
@@ -19,11 +19,6 @@ class OctoAI extends AbstractChatModel {
         $this->client = new OctoAIClient(config('octoai.api_key'), $model, $octoMLOptions);
         $this->context = $context;
 
-        // if there are functions, add to pre-prompt the functions the model has access to
-        if (count($functions) > 0) {
-            $this->prePrompt = $this->prePrompt . "\n\n" . $this->getFunctionPrompt();
-        }
-
     }
 
     /**
@@ -32,7 +27,9 @@ class OctoAI extends AbstractChatModel {
      * @param [type] $message
      */
     public function sendUserMessage($message): ChatModelResponse {
-        return $this->sendMessage(['role' => 'user', 'content' => $message]);
+        return $this->sendMessage(['role' => 'user', 'content' => json_encode(
+            ['source' => 'user', 'data' => ['message' => $message]]
+        )]);
     }
 
     /**
@@ -47,7 +44,11 @@ class OctoAI extends AbstractChatModel {
         if (is_array($result)) {
             $convertedResult = json_encode($result);
         }
-        return $this->sendMessage(['role' => 'function', 'name' => $functionName, 'content' => (string)$convertedResult]);
+        return $this->sendMessage(['role' => 'user', 'content' =>
+            json_encode(
+                ['source' => 'function_result', 'data' => ['function' => $functionName, 'result' => (string)$convertedResult]]
+            ) 
+        ]);
     }
 
     /**
@@ -56,7 +57,9 @@ class OctoAI extends AbstractChatModel {
      * @param [type] $message
      */
     public function sendSystemMessage($message): ChatModelResponse {
-        return $this->sendMessage(['role' => 'system', 'content' => $message]);
+        return $this->sendMessage(['role' => 'system', 'content' => json_encode(
+            ['source' => 'system', 'data' => ['message' => $message]]
+        )]);
     }
 
     /**
@@ -66,7 +69,9 @@ class OctoAI extends AbstractChatModel {
      */
     public function recordSystemMessage(string $message): void
     {
-        $this->recordContext(['role' => 'system', 'content' => $message]);
+        $this->recordContext(['role' => 'system', 'content' => json_encode(
+            ['source' => 'system', 'data' => ['message' => $message]]
+        )]);
     }
 
     /**
@@ -76,7 +81,9 @@ class OctoAI extends AbstractChatModel {
      */
     public function recordUserMessage(string $message): void
     {
-        $this->recordContext(['role' => 'user', 'content' => $message]);
+        $this->recordContext(['role' => 'user', 'content' => json_encode(
+            ['source' => 'user', 'data' => ['message' => $message]]
+        )]);
     }
 
     /**
@@ -87,7 +94,16 @@ class OctoAI extends AbstractChatModel {
      */
     public function recordFunctionResult(string $functionName, $result): void
     {
-        $this->recordContext(['role' => 'function', 'name' => $functionName, 'content' => $result]);
+        $convertedResult = $result;
+
+        if (is_array($result)) {
+            $convertedResult = json_encode($result);
+        }
+        $this->recordContext(['role' => 'user', 'content' =>
+            json_encode(
+                ['source' => 'function_result', 'data' => ['function' => $functionName, 'result' => (string)$convertedResult]]
+            ) 
+        ]);
     }
 
     /**
@@ -97,7 +113,9 @@ class OctoAI extends AbstractChatModel {
      */
     public function recordAssistantMessage(string $message): void
     {
-        $this->recordContext(['role' => 'assistant', 'content' => $message]);
+        $this->recordContext(['role' => 'assistant', 'content' => json_encode(
+            ['source' => 'assistant', 'data' => ['message' => $message]]
+        )]);
     }
 
     /**
@@ -123,7 +141,7 @@ class OctoAI extends AbstractChatModel {
         // TODO - check if the $result->finishReason == `function_call` and if so then
         // pass in the function call, otherwise dont?
         // OctoAI returns a function call value even though its always empty
-        return new ChatModelResponse($response->content, (array) $response->functionCall, null, ['usage' => $result->usage]);
+        return new ChatModelResponse($response->content, (array) ($response->functionCall ?? []), null, ['usage' => $result->usage]);
     }
 
     // /*
@@ -155,19 +173,20 @@ class OctoAI extends AbstractChatModel {
                 'type' => $parameter["type"], 
                 'description' => $parameter["description"],
             ];
+
+            // if parameter name is in requiredParameters then add required property to it
+            if (in_array($parameter["name"], $function->requiredParameters)) {
+                $parameters[$parameter["name"]]['required'] = true;
+            }
         }
 
         return [
             'name' => $function->name,
             'description' => $function->description,
             'parameters' => [
-                'type' => 'object',
-
                 //convert to object so json_encode works as expected
                 // and converts [] to {}
                 'properties' => (object)$parameters,    
-
-                'required' => $function->requiredParameters,
             ]
         ];
     }
@@ -175,7 +194,7 @@ class OctoAI extends AbstractChatModel {
     
     // returns a string that is a prompt for the functions
     // the functions are given in the format of `exampleFunction(param1, param2) - This is an example function. param1 is a string, param2 is a number`
-    private function getFunctionPrompt() {
+    private function getFunctionsAvailablePrompt() {
         //TODO - make this more follow-able... sprintf this thing?
         $prompt = "The following functions are available to use:\n\n";
 
@@ -204,13 +223,32 @@ class OctoAI extends AbstractChatModel {
         return $prompt;
     }
 
+    private function getPrePromptInstructionsMessage() {
+        return sprintf('%s\nAll responses should be JSON formatted and call a function, following this message as an example\n%s', 
+            json_encode([
+                'source' => 'instructions',
+                'data' => [
+                    'message' => $this->prePrompt
+                ],
+                'functions_available' => $this->getFunctionsAvailablePrompt()
+            ]),
+            json_encode([
+                'function' => 'example_function',
+                'parameters' => [
+                    'param1' => 'value1',
+                    'param2' => 'value2',
+                ]
+            ])
+        );
+    }
+
     // Given a context, and a max token count, it returns 
     // a new context that is under the max tokens count
     // This will also guarantee the pre-prompt is included
     private function getTokenPreppedContext($context, $maxTokens = 8192) {
         if (count($context) < 1) {
             return [
-                ['role' => 'system', 'content' => $this->prePrompt],
+                ['role' => 'system', 'content' => $this->getPrePromptInstructionsMessage()],
             ];
         }
 
@@ -231,7 +269,7 @@ class OctoAI extends AbstractChatModel {
         $tokenUsage = 0;
 
         // add the token usage for the pre-prompt
-        $tokenUsage += count($encoder->encode((string) $this->prePrompt));
+        $tokenUsage += count($encoder->encode((string) $this->getPrePromptInstructionsMessage()));
 
         // Go through context from newest first, dropping oldest ones off
         foreach(array_reverse($context) as $msg) {
@@ -252,7 +290,7 @@ class OctoAI extends AbstractChatModel {
     
         // now we add the pre-prompt in so it's there!
         // this will get reversed below so it's first instead
-        $newContext[] = ['role' => 'system', 'content' => $this->prePrompt];
+        $newContext[] = ['role' => 'system', 'content' => $this->getPrePromptInstructionsMessage()];
 
         //reverse so that it's chronological order again
         //since we went backwards above
@@ -261,3 +299,7 @@ class OctoAI extends AbstractChatModel {
 
 
 }
+
+
+
+
