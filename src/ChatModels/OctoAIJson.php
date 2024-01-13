@@ -126,11 +126,17 @@ class OctoAIJson extends AbstractChatModel {
 
         $this->recordContext($messageObj);
         $this->recordContext( (array) $response);
+
+        $parsedResponse = (array)json_decode($response->content);
+        $functionCall = [
+            'function' => $parsedResponse['function'],
+            'arguments' => $parsedResponse['parameters'],
+        ];
         
         // TODO - check if the $result->finishReason == `function_call` and if so then
         // pass in the function call, otherwise dont?
         // OctoAI returns a function call value even though its always empty
-        return new ChatModelResponse($response->content, (array) ($response->functionCall ?? []), null, ['usage' => $result->usage]);
+        return new ChatModelResponse("", (array) ($response->functionCall ?? []), null, ['usage' => $result->usage]);
     }
 
     // TODO - this isnt used why is it here? Only for open ai i think but just required for w/e reason
@@ -173,20 +179,24 @@ class OctoAIJson extends AbstractChatModel {
             
             $functionParamDetails = (array) $function['parameters']['properties']; // convert from odd openai format
             
-            foreach ($functionParamDetails['properties'] as $parameterName => $parameterDetails) {
-                $parameterDetailsFormatted = [
-                    'name' => $parameterName,
-                    'type' => $parameterDetails['type'],
-                    'description' => $parameterDetails['description'],
-                ];
-
-                if (in_array($parameterName, $functionParamDetails['required'])) {
-                    $parameterDetailsFormatted['required'] = true;
+            // if $functionParamDetails has properties
+            if (array_key_exists('properties', $functionParamDetails)) {
+                foreach ($functionParamDetails['properties'] as $parameterName => $parameterDetails) {
+                    $parameterDetailsFormatted = [
+                        'name' => $parameterName,
+                        'type' => $parameterDetails['type'],
+                        'description' => $parameterDetails['description'],
+                    ];
+    
+                    if (in_array($parameterName, $functionParamDetails['required'])) {
+                        $parameterDetailsFormatted['required'] = true;
+                    }
+                    $functionParameters[] = $parameterDetailsFormatted;
                 }
-                $functionParameters[] = $parameterDetailsFormatted;
+    
+                $functionDefinition['parameters'] = $functionParameters;
             }
-
-            $functionDefinition['parameters'] = $functionParameters;
+            
 
             // [
                 
