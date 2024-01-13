@@ -27,9 +27,7 @@ class OctoAIJson extends AbstractChatModel {
      * @param [type] $message
      */
     public function sendUserMessage($message): ChatModelResponse {
-        return $this->sendMessage(['role' => 'user', 'content' => json_encode(
-            ['source' => 'user', 'data' => ['message' => $message]]
-        )]);
+        return $this->sendMessage(['role' => 'user', 'content' => $message]);
     }
 
     /**
@@ -46,7 +44,7 @@ class OctoAIJson extends AbstractChatModel {
         }
         return $this->sendMessage(['role' => 'user', 'content' =>
             json_encode(
-                ['source' => 'function_result', 'data' => ['function' => $functionName, 'result' => (string)$convertedResult]]
+                ['source' => 'function_result', 'function_name' => $functionName, 'result' => (string)$convertedResult]
             ) 
         ]);
     }
@@ -57,9 +55,7 @@ class OctoAIJson extends AbstractChatModel {
      * @param [type] $message
      */
     public function sendSystemMessage($message): ChatModelResponse {
-        return $this->sendMessage(['role' => 'system', 'content' => json_encode(
-            ['source' => 'system', 'data' => ['message' => $message]]
-        )]);
+        return $this->sendMessage(['role' => 'system', 'content' => $message]);
     }
 
     /**
@@ -69,9 +65,7 @@ class OctoAIJson extends AbstractChatModel {
      */
     public function recordSystemMessage(string $message): void
     {
-        $this->recordContext(['role' => 'system', 'content' => json_encode(
-            ['source' => 'system', 'data' => ['message' => $message]]
-        )]);
+        $this->recordContext(['role' => 'system', 'content' => $message]);
     }
 
     /**
@@ -81,9 +75,7 @@ class OctoAIJson extends AbstractChatModel {
      */
     public function recordUserMessage(string $message): void
     {
-        $this->recordContext(['role' => 'user', 'content' => json_encode(
-            ['source' => 'user', 'data' => ['message' => $message]]
-        )]);
+        $this->recordContext(['role' => 'user', 'content' => $message]);
     }
 
     /**
@@ -101,7 +93,7 @@ class OctoAIJson extends AbstractChatModel {
         }
         $this->recordContext(['role' => 'user', 'content' =>
             json_encode(
-                ['source' => 'function_result', 'data' => ['function' => $functionName, 'result' => (string)$convertedResult]]
+                ['source' => 'function_result', 'function_name' => $functionName, 'result' => (string)$convertedResult]
             ) 
         ]);
     }
@@ -113,9 +105,7 @@ class OctoAIJson extends AbstractChatModel {
      */
     public function recordAssistantMessage(string $message): void
     {
-        $this->recordContext(['role' => 'assistant', 'content' => json_encode(
-            ['source' => 'assistant', 'data' => ['message' => $message]]
-        )]);
+        $this->recordContext(['role' => 'assistant', 'content' => $message]);
     }
 
     /**
@@ -133,12 +123,9 @@ class OctoAIJson extends AbstractChatModel {
         $result = $this->client->getCompletion($messageContext);
 
         $response = $result->choices[0]->message;
-        print_r(json_encode($messageContext));
 
         $this->recordContext($messageObj);
         $this->recordContext( (array) $response);
-        echo "\n\n";
-        print_r(json_encode($response));
         
         // TODO - check if the $result->finishReason == `function_call` and if so then
         // pass in the function call, otherwise dont?
@@ -183,9 +170,9 @@ class OctoAIJson extends AbstractChatModel {
             $functionParameters = [];
             $function = (array) $function;
             $function['parameters'] = (array) $function['parameters'];
-            print_r($function['parameters']);
+            
             $functionParamDetails = (array) $function['parameters']['properties']; // convert from odd openai format
-            print_r($functionParamDetails);
+            
             foreach ($functionParamDetails['properties'] as $parameterName => $parameterDetails) {
                 $parameterDetailsFormatted = [
                     'name' => $parameterName,
