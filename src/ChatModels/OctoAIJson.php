@@ -133,10 +133,12 @@ class OctoAIJson extends AbstractChatModel {
         $result = $this->client->getCompletion($messageContext);
 
         $response = $result->choices[0]->message;
+        print_r(json_encode($messageContext));
 
         $this->recordContext($messageObj);
-        $this->recordContext($response->toArray());
-
+        $this->recordContext( (array) $response);
+        echo "\n\n";
+        print_r(json_encode($response));
         
         // TODO - check if the $result->finishReason == `function_call` and if so then
         // pass in the function call, otherwise dont?
@@ -144,28 +146,7 @@ class OctoAIJson extends AbstractChatModel {
         return new ChatModelResponse($response->content, (array) ($response->functionCall ?? []), null, ['usage' => $result->usage]);
     }
 
-    // /*
-    // * Converts a function from an AgentFunction into
-    // * a form that open ai accepts like below
-    // * [
-    // *       'name' => 'get_current_weather',
-    // *       'description' => 'Get the current weather in a given location',
-    // *       'parameters' => [
-    // *           'type' => 'object',
-    // *           'properties' => [
-    // *               'location' => [
-    // *                   'type' => 'string',
-    // *                   'description' => 'The city and state, e.g. San Francisco, CA',
-    // *               ],
-    // *               'unit' => [
-    // *                   'type' => 'string',
-    // *                   'enum' => ['celsius', 'fahrenheit']
-    // *               ],
-    // *           ],
-    // *           'required' => ['location'],
-    // *       ],
-    // *   ]
-    // */
+    // TODO - this isnt used why is it here? Only for open ai i think but just required for w/e reason
     protected function convertFunctionsForModel(AgentFunction $function) {
         $parameters = [];
         foreach ($function->parameters as $parameter) {
@@ -173,54 +154,65 @@ class OctoAIJson extends AbstractChatModel {
                 'type' => $parameter["type"], 
                 'description' => $parameter["description"],
             ];
-
-            // if parameter name is in requiredParameters then add required property to it
-            if (in_array($parameter["name"], $function->requiredParameters)) {
-                $parameters[$parameter["name"]]['required'] = true;
-            }
         }
 
         return [
             'name' => $function->name,
             'description' => $function->description,
             'parameters' => [
+                'type' => 'object',
+
                 //convert to object so json_encode works as expected
                 // and converts [] to {}
                 'properties' => (object)$parameters,    
+
+                'required' => $function->requiredParameters,
             ]
         ];
     }
 
-    
-    // returns a string that is a prompt for the functions
-    // the functions are given in the format of `exampleFunction(param1, param2) - This is an example function. param1 is a string, param2 is a number`
-    private function getFunctionsAvailablePrompt() {
-        //TODO - make this more follow-able... sprintf this thing?
-        $prompt = "The following functions are available to use:\n\n";
+    private function getFunctionsAvailablePromptProperty() {
+        $functionsAvailable = [];
 
         foreach ($this->functions as $function) {
-            $prompt = $prompt . '.\n' . $function['name'] . "(";
+            $functionDefinition = [
+                'name' => $function['name'],
+                'description' => $function['description']
+            ];
 
-            // This is weird paramters.properties because of how open ai does it
-            // and i copy pasted the convertFunctionsForModel out of the chatgpt model
-            foreach ($function['parameters']['properties'] as $parameterName => $parameter) {
-                $prompt = $prompt . $parameterName . ", ";
+            $functionParameters = [];
+            $function = (array) $function;
+            $function['parameters'] = (array) $function['parameters'];
+            print_r($function['parameters']);
+            $functionParamDetails = (array) $function['parameters']['properties']; // convert from odd openai format
+            print_r($functionParamDetails);
+            foreach ($functionParamDetails['properties'] as $parameterName => $parameterDetails) {
+                $parameterDetailsFormatted = [
+                    'name' => $parameterName,
+                    'type' => $parameterDetails['type'],
+                    'description' => $parameterDetails['description'],
+                ];
+
+                if (in_array($parameterName, $functionParamDetails['required'])) {
+                    $parameterDetailsFormatted['required'] = true;
+                }
+                $functionParameters[] = $parameterDetailsFormatted;
             }
 
-            // remove the last comma and space
-            $prompt = substr($prompt, 0, -2);
+            $functionDefinition['parameters'] = $functionParameters;
 
-            $prompt = $prompt . ") - " . $function['description'] . "\n";
-
-            // add the parameters
-            foreach ($function['parameters']['properties'] as $parameterName => $parameter) {
-                $prompt = $prompt . $parameterName . " is a " . $parameter['type'] . ". " . $parameter['description'] . "\n";
-            }
-
-            $prompt = $prompt . "\n";
+            // [
+                
+            //     'parameters' => [
+            //         //convert to object so json_encode works as expected
+            //         // and converts [] to {}
+            //         'properties' => (array)$function['parameters'],    
+            //     ]
+            // ];
+            $functionsAvailable[] =  $functionDefinition;
         }
 
-        return $prompt;
+        return $functionsAvailable;
     }
 
     private function getPrePromptInstructionsMessage() {
@@ -230,7 +222,7 @@ class OctoAIJson extends AbstractChatModel {
                 'data' => [
                     'message' => $this->prePrompt
                 ],
-                'functions_available' => $this->getFunctionsAvailablePrompt()
+                'functions_available' => $this->getFunctionsAvailablePromptProperty()
             ]),
             json_encode([
                 'function' => 'example_function',
