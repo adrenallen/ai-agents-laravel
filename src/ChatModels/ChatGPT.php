@@ -9,9 +9,9 @@ use Adrenallen\AiAgentsLaravel\Agents\AgentFunction;
 
 class ChatGPT extends AbstractChatModel {
 
-    private $model;
-    private $client;
-    private $openAiOptions;
+    protected $model;
+    protected $client;
+    protected $openAiOptions;
 
     // class constructor
     /**
@@ -121,7 +121,13 @@ class ChatGPT extends AbstractChatModel {
         
         // TODO - check if the $result->finishReason == `function_call` and if so then
         // pass in the function call, otherwise dont?
-        return new ChatModelResponse($response->content, (array) $response->functionCall, null, ['usage' => $result->usage]);
+        return new ChatModelResponse($response->content, (array) $response->functionCall, null, [
+            'id' => $result->id,
+            'created' => $result->created,
+            'model' => $result->model,
+            'systemFingerprint' => $result->systemFingerprint,
+            'usage' => $result->usage
+        ]);
     }
 
     /*

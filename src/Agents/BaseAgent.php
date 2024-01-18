@@ -18,6 +18,7 @@ class BaseAgent {
     public $chatModel;
     public int $maxFunctionCalls = 10;  //max number of function loops that can occur without more user input.
     public string $prePrompt = "You are a helpful generalist assistant.";
+    public $lastCallMetadata = null;
 
     function __construct($chatModel) {
         $this->chatModel = $chatModel;
@@ -55,6 +56,8 @@ class BaseAgent {
 
     private $functionCallLoops = 0;
     private function parseModelResponse(ChatModelResponse $response) : string {
+        $this->lastCallMetadata = $response->metadata;
+        
         $this->functionCallLoops++;
 
         if ($this->functionCallLoops > $this->maxFunctionCalls){
