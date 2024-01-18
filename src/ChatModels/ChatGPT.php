@@ -122,11 +122,11 @@ class ChatGPT extends AbstractChatModel {
         // TODO - check if the $result->finishReason == `function_call` and if so then
         // pass in the function call, otherwise dont?
         return new ChatModelResponse($response->content, (array) $response->functionCall, null, [
-            'id' => $result->id,
-            'created' => $result->created,
-            'model' => $result->model,
-            'systemFingerprint' => $result->systemFingerprint,
-            'usage' => $result->usage
+            'id' => $result->id ?? null,
+            'created' => $result->created ?? null,
+            'model' => $result->model ?? null,
+            'systemFingerprint' => $result->systemFingerprint ?? null,
+            'usage' => $result->usage ?? null
         ]);
     }
 
