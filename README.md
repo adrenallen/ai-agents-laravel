@@ -34,17 +34,19 @@ public function add(int $a, int $b): int {
 🚀 Create a new AI Agent in <20 lines of code!
 
 # Table of Contents
-- [🔧 Setup](#-setup)
-- [👨‍💻 Usage](#-usage)
-  - [In Console/Testing](#in-consoletesting)
-  - [In Code](#in-code)
-- [🤖 Creating a new agent](#-creating-a-new-agent)
-  - [Defining an agent function](#defining-an-agent-function)
-- [🧰 Agent Traits](#-agent-traits)
-- [📝 Chat Models](#-chat-models)
-  - [Currently Supported](#currently-supported)
-  - [Adding a new chat model](#adding-a-new-chat-model)
-- [❤️ Contributing](#️-contributing)
+- [AI Agents for Laravel](#ai-agents-for-laravel)
+- [Table of Contents](#table-of-contents)
+  - [🔧 Setup](#-setup)
+  - [👨‍💻 Usage](#-usage)
+    - [In Console/Testing](#in-consoletesting)
+    - [In Code](#in-code)
+  - [🤖 Creating a new agent](#-creating-a-new-agent)
+    - [Defining an agent function](#defining-an-agent-function)
+  - [🧰 Agent Traits](#-agent-traits)
+  - [📝 Chat Models](#-chat-models)
+    - [Currently Supported](#currently-supported)
+    - [Adding a new chat model](#adding-a-new-chat-model)
+  - [❤️ Contributing](#️-contributing)
 
 ## 🔧 Setup 
 
@@ -73,8 +75,26 @@ You can type `exit` to exit the chat.
 
 ```php
 $chat = new \Adrenallen\AiAgentsLaravel\ChatModels\ChatGPT();
+// or
+$chat = new \Adrenallen\AiAgentsLaravel\ChatModels\AzureOpenAI();
+
 $agent = new \Adrenallen\AiAgentsLaravel\Agents\TestingAgent($chat); // Ensures the agent gets a pre-prompt at creation
 $agent->ask("Hello, is this thing on?"); // Yes, I'm here. How can I assist you today?
+$agent->lastCallMetadata;
+/*
+return $agent->lastCallMetadata;
+= [
+    "id" => "chatcmpl-8123ABC",
+    "created" => 1705545737,
+    "model" => "gpt-4",
+    "systemFingerprint" => "fp_l33t123",
+    "usage" => OpenAI\Responses\Chat\CreateResponseUsage {#5004
+      +promptTokens: 365,
+      +completionTokens: 17,
+      +totalTokens: 382,
+    },
+  ]
+*/
 ```
 
 ## 🤖 Creating a new agent 
@@ -143,7 +163,7 @@ It is highly encouraged that you place re-usable functions in a trait, and then 
 ### Currently Supported
 - GPT-3.5-turbo
 - GPT-4
-- ??? More soon...
+- Azure OpenAI
 
 ### Adding a new chat model
 New models can be added by extending `AbstractChatModel`. This class provides the basic functionality required to interact with the chat model.
