@@ -34,19 +34,17 @@ public function add(int $a, int $b): int {
 🚀 Create a new AI Agent in <20 lines of code!
 
 # Table of Contents
-- [AI Agents for Laravel](#ai-agents-for-laravel)
-- [Table of Contents](#table-of-contents)
-  - [🔧 Setup](#-setup)
-  - [👨‍💻 Usage](#-usage)
-    - [In Console/Testing](#in-consoletesting)
-    - [In Code](#in-code)
-  - [🤖 Creating a new agent](#-creating-a-new-agent)
-    - [Defining an agent function](#defining-an-agent-function)
-  - [🧰 Agent Traits](#-agent-traits)
-  - [📝 Chat Models](#-chat-models)
-    - [Currently Supported](#currently-supported)
-    - [Adding a new chat model](#adding-a-new-chat-model)
-  - [❤️ Contributing](#️-contributing)
+- [🔧 Setup](#-setup)
+- [👨‍💻 Usage](#-usage)
+  - [In Console/Testing](#in-consoletesting)
+  - [In Code](#in-code)
+- [🤖 Creating a new agent](#-creating-a-new-agent)
+  - [Defining an agent function](#defining-an-agent-function)
+- [🧰 Agent Traits](#-agent-traits)
+- [📝 Chat Models](#-chat-models)
+  - [Currently Supported](#currently-supported)
+  - [Adding a new chat model](#adding-a-new-chat-model)
+- [❤️ Contributing](#️-contributing)
 
 ## 🔧 Setup 
 
