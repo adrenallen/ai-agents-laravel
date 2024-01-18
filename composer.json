@@ -20,7 +20,8 @@
         "openai-php/client": "^0.8.0",
         "twilio/sdk": "^7.5",
         "guzzlehttp/guzzle": "^7.8",
-        "yethee/tiktoken": "^0.2.0"
+        "yethee/tiktoken": "^0.2.0",
+        "illuminate/support": "^10.40"
     },
     "extra": {
         "laravel": {
@@ -33,5 +34,8 @@
         "allow-plugins": {
             "php-http/discovery": true
         }
+    },
+    "require-dev": {
+        "phpunit/phpunit": "^10.5"
     }
 }

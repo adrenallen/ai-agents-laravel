@@ -9,6 +9,7 @@ class AiAgentsLaravelServiceProvider extends \Illuminate\Support\ServiceProvider
     public function boot()
     {
         $this->publishes([
+            __DIR__.'/../config/azure_openai.php' => config_path('azure_openai.php'),
             __DIR__.'/../config/openai.php' => config_path('openai.php'),
             __DIR__.'/../config/openweathermap.php' => config_path('openweathermap.php'),
             __DIR__.'/../config/twilio.php' => config_path('twilio.php'),
