@@ -167,4 +167,8 @@ It is highly encouraged that you place re-usable functions in a trait, and then 
 New models can be added by extending `AbstractChatModel`. This class provides the basic functionality required to interact with the chat model.
 
 ## ❤️ Contributing
-Opening new issues is encouraged if you have any questions, issues, or ideas. Pull requests are also welcome!
+Opening new issues is encouraged if you have any questions, issues, or ideas.
+
+Pull requests are also welcome!
+
+[See our contribution guide](CONTRIBUTING.md)
