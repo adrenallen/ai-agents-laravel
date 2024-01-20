@@ -44,6 +44,7 @@ class BaseAgent {
      *
      * This function is called when a function is called and returns a result
      * It is passed the function name, arguments, and result
+     * Useful for recording actions the agent is taking
      * 
      * @param string $functionName
      * @param array $functionArguments
