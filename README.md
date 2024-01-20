@@ -168,3 +168,5 @@ New models can be added by extending `AbstractChatModel`. This class provides th
 
 ## ❤️ Contributing
 Opening new issues is encouraged if you have any questions, issues, or ideas. Pull requests are also welcome!
+
+Please open PRs against the `dev` branch!
