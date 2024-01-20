@@ -40,6 +40,21 @@ class BaseAgent {
     }
 
     /**
+     * onSuccessfulFunctionCall
+     *
+     * This function is called when a function is called and returns a result
+     * It is passed the function name, arguments, and result
+     * 
+     * @param string $functionName
+     * @param array $functionArguments
+     * @param mixed $functionResult
+     * @return void
+     */
+    public function onSuccessfulFunctionCall($functionName, $functionArguments, $functionResult) : void {
+        // Intentionally blank - this is meant to be overridden
+    }
+
+    /**
      * Records a "user" roled message to the model, without getting a response
      *
      * @param string $message
@@ -110,6 +125,7 @@ class BaseAgent {
                     $functionResult = "Function '". $functionName . "' does not exist.";
                 } else {
                     $functionResult = call_user_func_array([$this, $functionName], (array)json_decode($functionArgs));
+                    $this->onSuccessfulFunctionCall($functionName, $functionArgs, $functionResult);
                 }
                 
             } catch (\Throwable $e) {
