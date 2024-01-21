@@ -107,6 +107,17 @@ class ChatGPT extends AbstractChatModel
         $this->recordContext(['role' => 'assistant', 'content' => $message]);
     }
 
+    public function recordAssistantFunction($functionName, $functionArguments) : void{
+        $this->recordContext([
+            'role' => 'assistant',
+            'content' => null,
+            'function_call' => [
+                'name' => $functionName,
+                'arguments' => json_encode($functionArguments)
+            ]
+        ]);
+    }
+
     /**
      * sends a message to the open ai model and returns the message result
      *

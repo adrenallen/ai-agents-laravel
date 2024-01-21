@@ -72,6 +72,11 @@ abstract class AbstractChatModel {
     abstract public function recordFunctionResult(string $functionName, $result): void;
 
     /**
+     * Records a function call from the model, without getting a response
+     */
+    abstract public function recordAssistantFunction($functionName, $functionArguments) : void;
+
+    /**
      * Records a "assistant" roled message to the model, without getting a response
      */
     abstract public function recordAssistantMessage(string $message): void;

@@ -93,6 +93,17 @@ class BaseAgent {
         $this->chatModel->recordFunctionResult($functionName, $result);
     }
 
+    
+    /**
+     * Records a function call from the model, without getting a response
+     * 
+     * @param string $functionName
+     * @param array $functionArguments
+     */
+    public function recordAssistantFunction($functionName, $functionArguments) : void{
+        $this->chatModel->recordAssistantFunction($functionName, $functionArguments);
+    }
+
     // Did the agent call a function in the last ask loop?
     // this is not saved, so only applies to current in-memory instance
     public function didAskCallFunction() : bool {
