@@ -110,8 +110,8 @@ class BaseAgent {
         return $this->functionCallLoops > 1; // The model will always call once, if more than 1 then the agent called a function
     }
 
-    private $functionCallLoops = 0;
-    private function parseModelResponse(ChatModelResponse $response) : string {
+    protected $functionCallLoops = 0;
+    protected function parseModelResponse(ChatModelResponse $response) : string {
         $this->lastCallMetadata = $response->metadata;
         
         $this->functionCallLoops++;
