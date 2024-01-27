@@ -14,7 +14,7 @@ class FunctionsOnlyAgent extends BaseAgent {
     // and tell the agent it must call a function
     // before returning
 
-    public string $functionRequiredMessage = "You must call a function before you can return.";
+    public string $functionRequiredMessage = "If you have answered the question, call 'completeTask' to return to the user. Otherwise, call a function.";
 
     //override php function from parent
     public function ask($message) : string {
@@ -88,7 +88,7 @@ class FunctionsOnlyAgent extends BaseAgent {
         $this->chatModel->context = array_slice($this->chatModel->context, 0, -1);
 
         // and ask with direction
-        return $this->ask("You must call a function before you can return. Call the completeTask function if you are done with all tasks.");
+        return $this->ask($this->functionRequiredMessage);
 
     }
 
