@@ -26,6 +26,10 @@ class FunctionsOnlyAgent extends BaseAgent {
         return $result;
     }
 
+    public function didAskCallFunction() : bool {
+        return true;    //it will always call a function or we reject it lol
+    }
+
     protected $hasCalledComplete = false;
     protected $functionCallLoops = 0;
     protected function parseModelResponse(ChatModelResponse $response) : string {
@@ -77,9 +81,21 @@ class FunctionsOnlyAgent extends BaseAgent {
             );
         }
 
+
         // if we get here, the response was not a function call
+
+        // we remove the last context to remove the non-function call
+        $this->chatModel->context = array_slice($this->chatModel->context, 0, -1);
+
+        // and ask with direction
         return $this->ask("You must call a function before you can return. Call the completeTask function if you are done with all tasks.");
 
+    }
+
+    public function getAgentFunctions(): array {
+        $functions = parent::getAgentFunctions();
+        $functions[] = AgentFunction::createFromMethodReflection(new \ReflectionMethod($this, 'completeTask'));
+        return $functions;
     }
 
     /**
