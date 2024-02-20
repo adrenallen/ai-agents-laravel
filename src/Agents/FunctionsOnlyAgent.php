@@ -16,6 +16,10 @@ class FunctionsOnlyAgent extends BaseAgent {
 
     public string $functionRequiredMessage = "If you have answered the question, call 'completeTask' to return to the user. Otherwise, call a function.";
 
+    // If set to true, the result of a function will be added to context
+    // and then the
+    public bool $returnOnFunctionCall = false;
+
     //override php function from parent
     public function ask($message) : string {
         $this->hasCalledComplete = false;
@@ -70,15 +74,23 @@ class FunctionsOnlyAgent extends BaseAgent {
             }
 
             if ($this->hasCalledComplete) {
-                return "complete";
+                return ""; // The agent is done, we simply return to break the loop!
             }
 
-            return $this->parseModelResponse(
-                $this->chatModel->sendFunctionResult(
-                    $functionName,
-                    $functionResult
-                )
-            );
+            if ($this->returnOnFunctionCall) {
+                // record the result
+                $this->chatModel->recordFunctionResult($functionName, $functionResult);
+                return "";
+            } else {
+                // let the agent react to the result!
+                return $this->parseModelResponse(
+                    $this->chatModel->sendFunctionResult(
+                        $functionName,
+                        $functionResult
+                    )
+                );
+            }
+
         }
 
 

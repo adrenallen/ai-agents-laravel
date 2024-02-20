@@ -9,7 +9,7 @@ use Adrenallen\AiAgentsLaravel\ChatModels\ChatModelResponse;
  * BaseAgent
  * Responsible for defining the responsibility of an "agent"
  * also includes a list of functions with descriptive docblocks that define what each function is for
- * 
+ *
  * This class also includes the base functions to use reflection to pull in the "allowed" functions that are sent
  * to underlying chat model
  */
@@ -39,13 +39,27 @@ class BaseAgent {
         }
     }
 
+    // Ask the model to complete a given function call
+    // optional $message will be recorded before asking for a function call
+    public function askFunction($functionName, $message = null) : string {
+        if ($message) {
+            $this->record($message);
+        }
+        return $this->parseModelResponse($this->chatModel->sendFunctionCall($functionName));
+    }
+
+    // Generate a response for the current context without adding anything new
+    public function generate() : string {
+        return $this->parseModelResponse($this->chatModel->generate());
+    }
+
     /**
      * onSuccessfulFunctionCall
      *
      * This function is called when a function is called and returns a result
      * It is passed the function name, arguments, and result
      * Useful for recording actions the agent is taking
-     * 
+     *
      * @param string $functionName
      * @param array $functionArguments
      * @param mixed $functionResult
@@ -93,10 +107,10 @@ class BaseAgent {
         $this->chatModel->recordFunctionResult($functionName, $result);
     }
 
-    
+
     /**
      * Records a function call from the model, without getting a response
-     * 
+     *
      * @param string $functionName
      * @param array $functionArguments
      */
@@ -113,7 +127,7 @@ class BaseAgent {
     protected $functionCallLoops = 0;
     protected function parseModelResponse(ChatModelResponse $response) : string {
         $this->lastCallMetadata = $response->metadata;
-        
+
         $this->functionCallLoops++;
 
         if ($this->functionCallLoops > $this->maxFunctionCalls){
@@ -130,7 +144,7 @@ class BaseAgent {
             $functionCall = $response->functionCall;
             $functionName = $functionCall['name'];
             $functionArgs = $functionCall['arguments'];
-            
+
             $functionResult = "";
             try {
                 if (!method_exists($this, $functionName)){
@@ -139,11 +153,11 @@ class BaseAgent {
                     $functionResult = call_user_func_array([$this, $functionName], (array)json_decode($functionArgs));
                     $this->onSuccessfulFunctionCall($functionName, $functionArgs, $functionResult);
                 }
-                
+
             } catch (\Throwable $e) {
                 $errorMessage = $e->getMessage();
-                $functionResult = "An error occurred while running the function " 
-                    . $functionName 
+                $functionResult = "An error occurred while running the function "
+                    . $functionName
                     . ":'" . strval($errorMessage);
                     //. "'. You may need to ask the user for more information.";
             }
@@ -158,14 +172,14 @@ class BaseAgent {
 
         return $response->message;
     }
-    
+
 
     /**
      * getAgentFunctions
      *
      * Returns a list of functions that the agent is allowed to use
      * These are passed into the chat model so it knows what it is capable of doing
-     * 
+     *
      * @return array
      */
     public function getAgentFunctions(): array {
@@ -176,7 +190,7 @@ class BaseAgent {
             if (AgentFunction::isMethodForAgent($method)){
                 $allowedFunctions[] = AgentFunction::createFromMethodReflection($method);
             }
-            
+
         }
         return $allowedFunctions;
     }

@@ -6,14 +6,14 @@ use Adrenallen\AiAgentsLaravel\Agents\AgentFunction;
 
 /**
  * AbstractChatModel
- * 
+ *
  * Responsible for abstracting the chat model API
- * 
+ *
  * Includes methods for turning an agent's duty and allowed functions
  * into a proper prompt to start a chat
- * 
- * 
- * 
+ *
+ *
+ *
  */
 abstract class AbstractChatModel {
 
@@ -31,6 +31,20 @@ abstract class AbstractChatModel {
     abstract protected function convertFunctionsForModel(AgentFunction $function);
 
     /**
+     * Generate a response for the current context without adding anything new
+     *
+     * @return ChatModelResponse
+     */
+    abstract public function generate() : ChatModelResponse;
+
+    /**
+     * Force the model to call a function
+     *
+     * @param string $functionName
+     */
+    abstract public function sendFunctionCall(string $functionName): ChatModelResponse;
+
+    /**
      * Sends a function result to the model
      *
      * @param string $functionName
@@ -44,7 +58,7 @@ abstract class AbstractChatModel {
      * @param string $message
      */
     abstract public function sendSystemMessage(string $message): ChatModelResponse;
-    
+
 
     /**
      * sends a "user" roled message to the model
@@ -60,7 +74,7 @@ abstract class AbstractChatModel {
      * @param string $message
      */
     abstract public function recordUserMessage(string $message): void;
-    
+
     /**
      * Records a "system" roled message to the model, without getting a response
      */
@@ -102,6 +116,6 @@ abstract class AbstractChatModel {
         }
     }
 
-    
+
 
 }

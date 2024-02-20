@@ -40,6 +40,32 @@ class ChatGPT extends AbstractChatModel
         return $this->sendMessage(['role' => 'user', 'content' => $message]);
     }
 
+    // Force the model to call the given function and provide its own parameters
+    public function sendFunctionCall(string $functionName): ChatModelResponse
+    {
+
+        // if openAiOptions has a `function_call` then we need to save it, else null
+        $oldFunctionRequirement = $this->openAiOptions['function_call'] ?? null;
+
+        // Set the option to force function_call
+        $this->openAiOptions['function_call'] = ["name" => $functionName];
+
+        $result = $this->sendMessage(null);
+
+        //Unset the temp requirement and set it back to what it was previously
+        unset($this->openAiOptions['function_call']);
+        if ($oldFunctionRequirement) {
+            $this->openAiOptions['function_call'] = $oldFunctionRequirement;
+        }
+
+        return $result;
+    }
+
+    public function generate() : ChatModelResponse
+    {
+        return $this->sendMessage(null);
+    }
+
     /**
      * Sends a function result to the model
      *
@@ -94,12 +120,15 @@ class ChatGPT extends AbstractChatModel
      */
     public function recordFunctionResult(string $functionName, $result): void
     {
+        if ($result == "") {
+            return; // Don't record empty results (like from a thought or observation)
+        }
         $this->recordContext(['role' => 'function', 'name' => $functionName, 'content' => $result]);
     }
 
     /**
      * records an "assistant" rol message to the model
-     * 
+     *
      * @param string $message
      */
     public function recordAssistantMessage(string $message): void
@@ -125,12 +154,15 @@ class ChatGPT extends AbstractChatModel
      */
     protected function sendMessage($messageObj): ChatModelResponse
     {
+        // Build the new context
+        $newContext = [...$this->context];
+        if ($messageObj) {
+            $newContext[] = $messageObj;
+        }
+
         $options = [
             'model' => $this->model,
-            'messages' => $this->getTokenPreppedContext([
-                ...$this->context,
-                $messageObj,
-            ]),
+            'messages' => $this->getTokenPreppedContext($newContext),
             ...$this->openAiOptions,
         ];
 
@@ -142,7 +174,10 @@ class ChatGPT extends AbstractChatModel
 
         $response = $result->choices[0]->message;
 
-        $this->recordContext($messageObj);
+        if ($messageObj) {
+            $this->recordContext($messageObj);
+        }
+
         $this->recordContext($response->toArray());
 
 
@@ -205,7 +240,7 @@ class ChatGPT extends AbstractChatModel
     }
 
 
-    // Given a context, and a max token count, it returns 
+    // Given a context, and a max token count, it returns
     // a new context that is under the max tokens count
     // This will also guarantee the pre-prompt is included
     private function getTokenPreppedContext($context, $maxTokens = 8192)
