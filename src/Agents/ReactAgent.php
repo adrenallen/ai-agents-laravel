@@ -6,7 +6,7 @@ use Adrenallen\AiAgentsLaravel\Agents\AgentFunction;
 use Adrenallen\AiAgentsLaravel\Agents\FunctionsOnlyAgent;
 
 /**
- * BaseReactAgent
+ * ReactAgent
  * An agent that implements a ReAct prompting chain
  */
 class ReactAgent extends FunctionsOnlyAgent {
