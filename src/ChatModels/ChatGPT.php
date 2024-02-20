@@ -7,7 +7,8 @@ use Yethee\Tiktoken\EncoderProvider;
 
 use Adrenallen\AiAgentsLaravel\Agents\AgentFunction;
 
-class ChatGPT extends AbstractChatModel {
+class ChatGPT extends AbstractChatModel
+{
 
     protected $model;
     protected $client;
@@ -19,7 +20,8 @@ class ChatGPT extends AbstractChatModel {
      * @param array $context
      * @param array $openAiOptions
      */
-    public function __construct($context = [], $prePrompt = "", $functions = [], $model = 'gpt-3.5-turbo',  $openAiOptions = []) {
+    public function __construct($context = [], $prePrompt = "", $functions = [], $model = 'gpt-3.5-turbo',  $openAiOptions = [])
+    {
 
         parent::__construct($context, $prePrompt, $functions);
         $this->model = $model;
@@ -33,8 +35,35 @@ class ChatGPT extends AbstractChatModel {
      *
      * @param [type] $message
      */
-    public function sendUserMessage($message): ChatModelResponse {
+    public function sendUserMessage($message): ChatModelResponse
+    {
         return $this->sendMessage(['role' => 'user', 'content' => $message]);
+    }
+
+    // Force the model to call the given function and provide its own parameters
+    public function sendFunctionCall(string $functionName): ChatModelResponse
+    {
+
+        // if openAiOptions has a `function_call` then we need to save it, else null
+        $oldFunctionRequirement = $this->openAiOptions['function_call'] ?? null;
+
+        // Set the option to force function_call
+        $this->openAiOptions['function_call'] = ["name" => $functionName];
+
+        $result = $this->sendMessage(null);
+
+        //Unset the temp requirement and set it back to what it was previously
+        unset($this->openAiOptions['function_call']);
+        if ($oldFunctionRequirement) {
+            $this->openAiOptions['function_call'] = $oldFunctionRequirement;
+        }
+
+        return $result;
+    }
+
+    public function generate() : ChatModelResponse
+    {
+        return $this->sendMessage(null);
     }
 
     /**
@@ -43,7 +72,8 @@ class ChatGPT extends AbstractChatModel {
      * @param string $functionName
      * @param [type] $result
      */
-    public function sendFunctionResult(string $functionName, $result): ChatModelResponse {
+    public function sendFunctionResult(string $functionName, $result): ChatModelResponse
+    {
         $convertedResult = $result;
 
         if (is_array($result)) {
@@ -57,7 +87,8 @@ class ChatGPT extends AbstractChatModel {
      *
      * @param [type] $message
      */
-    public function sendSystemMessage($message): ChatModelResponse {
+    public function sendSystemMessage($message): ChatModelResponse
+    {
         return $this->sendMessage(['role' => 'system', 'content' => $message]);
     }
 
@@ -89,7 +120,31 @@ class ChatGPT extends AbstractChatModel {
      */
     public function recordFunctionResult(string $functionName, $result): void
     {
+        if ($result == "") {
+            return; // Don't record empty results (like from a thought or observation)
+        }
         $this->recordContext(['role' => 'function', 'name' => $functionName, 'content' => $result]);
+    }
+
+    /**
+     * records an "assistant" rol message to the model
+     *
+     * @param string $message
+     */
+    public function recordAssistantMessage(string $message): void
+    {
+        $this->recordContext(['role' => 'assistant', 'content' => $message]);
+    }
+
+    public function recordAssistantFunction($functionName, $functionArguments) : void{
+        $this->recordContext([
+            'role' => 'assistant',
+            'content' => null,
+            'function_call' => [
+                'name' => $functionName,
+                'arguments' => json_encode($functionArguments)
+            ]
+        ]);
     }
 
     /**
@@ -97,13 +152,17 @@ class ChatGPT extends AbstractChatModel {
      *
      * @param [type] $messageObj
      */
-    protected function sendMessage($messageObj) : ChatModelResponse{
+    protected function sendMessage($messageObj): ChatModelResponse
+    {
+        // Build the new context
+        $newContext = [...$this->context];
+        if ($messageObj) {
+            $newContext[] = $messageObj;
+        }
+
         $options = [
             'model' => $this->model,
-            'messages' => $this->getTokenPreppedContext([
-                ...$this->context,
-                $messageObj,
-            ]),
+            'messages' => $this->getTokenPreppedContext($newContext),
             ...$this->openAiOptions,
         ];
 
@@ -115,10 +174,13 @@ class ChatGPT extends AbstractChatModel {
 
         $response = $result->choices[0]->message;
 
-        $this->recordContext($messageObj);
+        if ($messageObj) {
+            $this->recordContext($messageObj);
+        }
+
         $this->recordContext($response->toArray());
 
-        
+
         // TODO - check if the $result->finishReason == `function_call` and if so then
         // pass in the function call, otherwise dont?
         return new ChatModelResponse($response->content, (array) $response->functionCall, null, [
@@ -152,11 +214,12 @@ class ChatGPT extends AbstractChatModel {
     *       ],
     *   ]
     */
-    protected function convertFunctionsForModel(AgentFunction $function) {
+    protected function convertFunctionsForModel(AgentFunction $function)
+    {
         $parameters = [];
         foreach ($function->parameters as $parameter) {
             $parameters[$parameter["name"]] = [
-                'type' => $parameter["type"], 
+                'type' => $parameter["type"],
                 'description' => $parameter["description"],
             ];
         }
@@ -169,7 +232,7 @@ class ChatGPT extends AbstractChatModel {
 
                 //convert to object so json_encode works as expected
                 // and converts [] to {}
-                'properties' => (object)$parameters,    
+                'properties' => (object)$parameters,
 
                 'required' => $function->requiredParameters,
             ]
@@ -177,22 +240,11 @@ class ChatGPT extends AbstractChatModel {
     }
 
 
-    // Given a context, and a max token count, it returns 
+    // Given a context, and a max token count, it returns
     // a new context that is under the max tokens count
     // This will also guarantee the pre-prompt is included
-    private function getTokenPreppedContext($context, $maxTokens = 8192) {
-        if (count($context) < 1) {
-            return [
-                ['role' => 'system', 'content' => $this->prePrompt],
-            ];
-        }
-
-        // If the first message is a system message we assume its a prompt
-        if ($context[0]['role'] == 'system') {   
-            // call recursive but drop the first one
-            return $this->getTokenPreppedContext(array_slice($context, 1), $maxTokens);
-        }
-
+    private function getTokenPreppedContext($context, $maxTokens = 8192)
+    {
         $provider = new EncoderProvider();
         $encoder = $provider->getForModel($this->model);
 
@@ -203,9 +255,9 @@ class ChatGPT extends AbstractChatModel {
         $tokenUsage += count($encoder->encode((string) $this->prePrompt));
 
         // Go through context from newest first, dropping oldest ones off
-        foreach(array_reverse($context) as $msg) {
+        foreach (array_reverse($context) as $msg) {
             $tokens = $encoder->encode((string) $msg['content']);
-            
+
             // If there is a function call then add those tokens too
             if (array_key_exists('function_call', $msg)) {
                 $tokens = [...$tokens, $encoder->encode(json_encode($msg['function_call']))];
@@ -218,15 +270,19 @@ class ChatGPT extends AbstractChatModel {
             $newContext[] = $msg;
             $tokenUsage = $tokenUsage + count($tokens);
         }
-    
+
         // now we add the pre-prompt in so it's there!
+        // if the prompt is not empty and the first message is not already the pre-prompt
         // this will get reversed below so it's first instead
-        $newContext[] = ['role' => 'system', 'content' => $this->prePrompt];
+        if (
+            strlen($this->prePrompt) > 0 &&
+            (count($context) < 1 || $context[0]['role'] != 'system' || $context[0]['content'] != $this->prePrompt)
+        ) {
+            $newContext[] = ['role' => 'system', 'content' => $this->prePrompt];
+        }
 
         //reverse so that it's chronological order again
         //since we went backwards above
-        return array_reverse($newContext);  
+        return array_reverse($newContext);
     }
-
-
 }
