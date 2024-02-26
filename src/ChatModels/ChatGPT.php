@@ -243,10 +243,12 @@ class ChatGPT extends AbstractChatModel
     // Given a context, and a max token count, it returns
     // a new context that is under the max tokens count
     // This will also guarantee the pre-prompt is included
-    private function getTokenPreppedContext($context, $maxTokens = 8192)
+    private function getTokenPreppedContext($context)
     {
         $provider = new EncoderProvider();
         $encoder = $provider->getForModel($this->model);
+
+        $maxTokens = $this->getMaxTokenGuessByModel($this->model);
 
         $newContext = [];
         $tokenUsage = 0;
@@ -284,5 +286,40 @@ class ChatGPT extends AbstractChatModel
         //reverse so that it's chronological order again
         //since we went backwards above
         return array_reverse($newContext);
+    }
+
+    // Given a model, it returns the max token count
+    // this is mostly a guess based on OpenAI latest published token counts....
+    // https://platform.openai.com/docs/models/
+    private function getMaxTokenGuessByModel(string $model): int
+    {
+        switch ($model) {
+            case 'gpt-4-turbo-preview':
+            case 'gpt-4-0125-preview':
+            case 'gpt-4-1106-preview':
+            case 'gpt-4-vision-preview':
+            case 'gpt-4-1106-vision-preview':
+                return 128000;
+            case 'gpt-4':
+            case 'gpt-4-0613':
+                return 8192;
+            case 'gpt-4-32k':
+            case 'gpt-4-32k-0613':
+                return 32768;
+            case 'gpt-3.5-turbo-16k':
+                return 16384;
+            case 'gpt-3.5-turbo':
+                return 4096;
+            case 'gpt-3.5-turbo-0125':
+                return 16385;
+            case 'gpt-3.5-turbo-1106':
+                return 16385;
+            case 'gpt-3.5-turbo-instruct':
+                return 4096;
+            case 'gpt-3.5-turbo-16k-0613':
+                return 16385;
+            default:
+                return 4096;
+        }
     }
 }
