@@ -4,6 +4,7 @@ namespace Adrenallen\AiAgentsLaravel\Agents;
 
 
 use Adrenallen\AiAgentsLaravel\ChatModels\ChatModelResponse;
+use Throwable;
 
 /**
  * BaseAgent
@@ -155,11 +156,7 @@ class BaseAgent {
                 }
 
             } catch (\Throwable $e) {
-                $errorMessage = $e->getMessage();
-                $functionResult = "An error occurred while running the function "
-                    . $functionName
-                    . ":'" . strval($errorMessage);
-                    //. "'. You may need to ask the user for more information.";
+                $functionResult = $this->getErrorMessageString($e, $functionName);
             }
 
             return $this->parseModelResponse(
@@ -173,6 +170,19 @@ class BaseAgent {
         return $response->message;
     }
 
+    /**
+     * getErrorMessageString
+     * 
+     * Returns a string that represents the error message
+     * Can be overriden to customize functionality in other agents
+     * 
+     * @param Throwable $error - The error that was thrown
+     * @param string $functionName - The name of the function that was called, this may be null if not in a function!
+     * 
+     */
+    public function getErrorMessageString(Throwable $error, string $functionName = null) : string {
+        return sprintf("Failure - An error occurred while running the function %s.\nError - '%s'.", $functionName, $error->getMessage());
+    }
 
     /**
      * getAgentFunctions
