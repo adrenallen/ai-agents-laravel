@@ -20,7 +20,7 @@ class AnthropicClaude extends AbstractChatModel
     public function __construct(public $context = [], $prePrompt = "", $functions = [], protected $model = 'claude-3-opus-20240229',  protected $claudeOptions = [])
     {
         parent::__construct($context, $prePrompt, $functions);
-        $this->client = new AnthropicClient(config('openai.api_key'), $claudeOptions['anthropic-version'] ?? "2023-06-01");
+        $this->client = new AnthropicClient(config('anthropic.api_key'), $claudeOptions['anthropic-version'] ?? "2023-06-01");
     }
 
     /**
