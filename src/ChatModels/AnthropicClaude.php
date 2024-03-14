@@ -2,7 +2,6 @@
 
 namespace Adrenallen\AiAgentsLaravel\ChatModels;
 
-use OpenAI;
 use Yethee\Tiktoken\EncoderProvider;
 
 use Adrenallen\AiAgentsLaravel\Agents\AgentFunction;
@@ -232,7 +231,7 @@ EOD;
     private function getTokenPreppedContext($context)
     {
         $provider = new EncoderProvider();
-        $encoder = $provider->getForModel($this->model);
+        $encoder = $provider->getForModel("gpt-4");
 
         $maxTokens = $this->getMaxTokenGuessByModel($this->model);
 
