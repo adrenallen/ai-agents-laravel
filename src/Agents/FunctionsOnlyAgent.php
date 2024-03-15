@@ -51,44 +51,49 @@ class FunctionsOnlyAgent extends BaseAgent {
             throw new \Exception($response->error);
         }
 
-        if ($response->functionCall){
-            $functionCall = $response->functionCall;
-            $functionName = $functionCall['name'];
-            $functionArgs = $functionCall['arguments'];
+        if ($response->functionCalls){
+            foreach($response->functionCalls as $idx => $functionCall) {
+                $functionName = $functionCall['name'];
+                $functionArgs = $functionCall['arguments'];
 
-            $functionResult = "";
-            try {
-                if (!method_exists($this, $functionName)){
-                    $functionResult = "Function '". $functionName . "' does not exist.";
-                } else {
-                    $functionResult = call_user_func_array([$this, $functionName], (array)json_decode($functionArgs));
-                    $this->onSuccessfulFunctionCall($functionName, $functionArgs, $functionResult);
+                $functionResult = "";
+                try {
+                    if (!method_exists($this, $functionName)){
+                        $functionResult = "Function '". $functionName . "' does not exist.";
+                    } else {
+                        $convertedArgs = is_array($functionArgs) ? json_encode($functionArgs) : $functionArgs;
+                        $functionResult = call_user_func_array([$this, $functionName], (array)json_decode($convertedArgs));
+                        $this->onSuccessfulFunctionCall($functionName, $convertedArgs, $functionResult);
+                    }
+
+                } catch (\Throwable $e) {
+                    $functionResult = $this->getErrorMessageString($e, $functionName);
+                        //. "'. You may need to ask the user for more information.";
                 }
 
-            } catch (\Throwable $e) {
-                $errorMessage = $e->getMessage();
-                $functionResult = "An error occurred while running the function "
-                    . $functionName
-                    . ":'" . strval($errorMessage);
-                    //. "'. You may need to ask the user for more information.";
-            }
+                if ($this->hasCalledComplete) {
+                    return ""; // The agent is done, we simply return to break the loop!
+                }
 
-            if ($this->hasCalledComplete) {
-                return ""; // The agent is done, we simply return to break the loop!
-            }
-
-            if ($this->returnOnFunctionCall) {
-                // record the result
-                $this->chatModel->recordFunctionResult($functionName, $functionResult);
-                return "";
-            } else {
-                // let the agent react to the result!
-                return $this->parseModelResponse(
-                    $this->chatModel->sendFunctionResult(
-                        $functionName,
-                        $functionResult
-                    )
-                );
+                // If the last function call, then return the result, else record it.
+                if ($idx == count($response->functionCalls) - 1){
+                    if ($this->returnOnFunctionCall) {
+                        // record the result
+                        $this->chatModel->recordFunctionResult($functionName, $functionResult);
+                        return "";
+                    } else {
+                        // let the agent react to the result!
+                        return $this->parseModelResponse(
+                            $this->chatModel->sendFunctionResult(
+                                $functionName,
+                                $functionResult
+                            )
+                        );
+                    }
+                } else {
+                    // Just record this one and move onto the next
+                    $this->chatModel->recordFunctionResult($functionName, $functionResult);
+                }
             }
 
         }

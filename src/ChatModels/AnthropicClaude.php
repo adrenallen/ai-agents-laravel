@@ -6,7 +6,6 @@ use OpenAI;
 use Yethee\Tiktoken\EncoderProvider;
 
 use Adrenallen\AiAgentsLaravel\Agents\AgentFunction;
-use Illuminate\Support\Facades\Log;
 
 class AnthropicClaude extends AbstractChatModel
 {
@@ -101,6 +100,7 @@ class AnthropicClaude extends AbstractChatModel
         if ($result == "") {
             return; // Don't record empty results (like from a thought or observation)
         }
+
         $this->recordContext([
             'role' => 'user',
             'content' => $this->formatFunctionResultString($functionName, $result)
@@ -183,6 +183,7 @@ class AnthropicClaude extends AbstractChatModel
         }
 
         $this->recordContext(['role' => 'assistant', 'content' => $response]);
+
 
         $functionCalls = $this->parseFunctionCallsString($response) ?? [];
 
@@ -320,8 +321,8 @@ EOD;
     private function parseFunctionCallsString($functionCallString)
     {
         $functionCalls = [];
-        $findXml = '/<function_calls>.*<\\\/function_calls>/gsU';
-        preg_match($findXml, $functionCallString, $matches);
+        $findXml = '/<function_calls>.*<\/function_calls>/Ums';
+        preg_match_all($findXml, $functionCallString, $matches, PREG_SET_ORDER, 0);
 
         foreach($matches as $match) {
 
@@ -329,7 +330,7 @@ EOD;
             // <function_calls>\n<invoke>\n<tool_name>messageDriver<\/tool_name>\n<parameters>\n<message>I'm doing well, thanks for asking! I see you are currently at the Ullrich, Gottlieb and Zboncak stop. How is everything going there so far? Let me know if you need any assistance with this load.<\/message>\n<expectAnswer>true<\/expectAnswer>\n<\/parameters>\n<\/invoke>\n<\/function_calls>
 
             // Make this xml compatible...
-            $xmlString = $match;
+            $xmlString = $match[0];
             $xmlString = str_replace('\n', "\n", $xmlString);
             $xmlString = str_replace("<\\/", "</", $xmlString);
             $xmlString = str_replace('>\n<', '><', $xmlString);
@@ -338,8 +339,10 @@ EOD;
                 $functionCall = [];
                 $functionCall['name'] = (string) $xml->invoke->tool_name;
                 $functionCall['arguments'] = [];
-                foreach ($xml->invoke->parameters->children() as $key => $value) {
-                    $functionCall['arguments'][$key] = (string) $value;
+                if ($xml->invoke->parameters->children()) {
+                    foreach ($xml->invoke->parameters->children() as $key => $value) {
+                        $functionCall['arguments'][$key] = (string) $value;
+                    }
                 }
                 $functionCalls[] = $functionCall;
             }
@@ -351,9 +354,13 @@ EOD;
 
     private function formatFunctionResultString($functionName, $result)
     {
+
+        $convertedResult = $result;
+
         if (is_array($result)) {
             $convertedResult = json_encode($result);
         }
+
         return sprintf('
                 <function_results>
                 <result>

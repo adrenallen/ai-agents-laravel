@@ -145,16 +145,17 @@ class BaseAgent {
             foreach($response->functionCalls as $idx => $functionCall) {
                 $functionName = $functionCall['name'];
                 $functionArgs = $functionCall['arguments'];
-    
+
                 $functionResult = "";
                 try {
                     if (!method_exists($this, $functionName)){
                         $functionResult = "Function '". $functionName . "' does not exist.";
                     } else {
-                        $functionResult = call_user_func_array([$this, $functionName], (array)json_decode($functionArgs));
-                        $this->onSuccessfulFunctionCall($functionName, $functionArgs, $functionResult);
+                        $convertedArgs = is_array($functionArgs) ? json_encode($functionArgs) : $functionArgs;
+                        $functionResult = call_user_func_array([$this, $functionName], (array)json_decode($convertedArgs));
+                        $this->onSuccessfulFunctionCall($functionName, $convertedArgs, $functionResult);
                     }
-    
+
                 } catch (\Throwable $e) {
                     $functionResult = $this->getErrorMessageString($e, $functionName);
                 }
@@ -171,7 +172,7 @@ class BaseAgent {
                     $this->chatModel->recordFunctionResult($functionName, $functionResult);
                 }
             }
-            
+
         }
 
         return $response->message;
@@ -179,13 +180,13 @@ class BaseAgent {
 
     /**
      * getErrorMessageString
-     * 
+     *
      * Returns a string that represents the error message
      * Can be overriden to customize functionality in other agents
-     * 
+     *
      * @param Throwable $error - The error that was thrown
      * @param string $functionName - The name of the function that was called, this may be null if not in a function!
-     * 
+     *
      */
     public function getErrorMessageString(Throwable $error, string $functionName = null) : string {
         return sprintf("Failure - An error occurred while running the function %s.\nError - '%s'.", $functionName, $error->getMessage());
