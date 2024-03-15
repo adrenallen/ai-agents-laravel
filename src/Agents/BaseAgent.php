@@ -141,30 +141,37 @@ class BaseAgent {
             throw new \Exception($response->error);
         }
 
-        if ($response->functionCall){
-            $functionCall = $response->functionCall;
-            $functionName = $functionCall['name'];
-            $functionArgs = $functionCall['arguments'];
-
-            $functionResult = "";
-            try {
-                if (!method_exists($this, $functionName)){
-                    $functionResult = "Function '". $functionName . "' does not exist.";
-                } else {
-                    $functionResult = call_user_func_array([$this, $functionName], (array)json_decode($functionArgs));
-                    $this->onSuccessfulFunctionCall($functionName, $functionArgs, $functionResult);
+        if ($response->functionCalls){
+            foreach($response->functionCalls as $idx => $functionCall) {
+                $functionName = $functionCall['name'];
+                $functionArgs = $functionCall['arguments'];
+    
+                $functionResult = "";
+                try {
+                    if (!method_exists($this, $functionName)){
+                        $functionResult = "Function '". $functionName . "' does not exist.";
+                    } else {
+                        $functionResult = call_user_func_array([$this, $functionName], (array)json_decode($functionArgs));
+                        $this->onSuccessfulFunctionCall($functionName, $functionArgs, $functionResult);
+                    }
+    
+                } catch (\Throwable $e) {
+                    $functionResult = $this->getErrorMessageString($e, $functionName);
                 }
 
-            } catch (\Throwable $e) {
-                $functionResult = $this->getErrorMessageString($e, $functionName);
+                // if the last function call, then return the result, else record it.
+                if ($idx == count($response->functionCalls) - 1){
+                    return $this->parseModelResponse(
+                        $this->chatModel->sendFunctionResult(
+                            $functionName,
+                            $functionResult
+                        )
+                    );
+                } else {
+                    $this->chatModel->recordFunctionResult($functionName, $functionResult);
+                }
             }
-
-            return $this->parseModelResponse(
-                $this->chatModel->sendFunctionResult(
-                    $functionName,
-                    $functionResult
-                )
-            );
+            
         }
 
         return $response->message;
