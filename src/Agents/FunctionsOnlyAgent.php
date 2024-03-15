@@ -71,7 +71,7 @@ class FunctionsOnlyAgent extends BaseAgent {
                         //. "'. You may need to ask the user for more information.";
                 }
 
-                if ($this->hasCalledComplete) {
+                if ($this->hasCalledComplete && count($response->functionCalls) == 1) {
                     return ""; // The agent is done, we simply return to break the loop!
                 }
 
