@@ -168,7 +168,7 @@ class AnthropicClaude extends AbstractChatModel
         $newContext = $this->getContextForNewMessage($messageObj);
 
         $options = [
-            'max_tokens' => 1024,
+            'max_tokens' => $this->claudeOptions['max_tokens'] ?? 1024,
             'model' => $this->model,
             'messages' => $this->getTokenPreppedContext($newContext),
             ...$this->claudeOptions,
@@ -176,6 +176,14 @@ class AnthropicClaude extends AbstractChatModel
         ];
 
         $result = $this->client->getCompletion($options);
+
+        if (isset($result['error'])) {
+            throw new \Exception($result['error']);
+        }
+
+        if (!isset($result["content"][0]["text"])) {
+            throw new \Exception("No text in response from model: ". json_encode($result));
+        }
 
         $response = $result["content"][0]["text"];
 
