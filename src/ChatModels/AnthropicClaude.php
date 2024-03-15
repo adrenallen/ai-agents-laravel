@@ -10,6 +10,7 @@ use Adrenallen\AiAgentsLaravel\Agents\AgentFunction;
 class AnthropicClaude extends AbstractChatModel
 {
     protected AnthropicClient $client;
+    public $maxTokensBuffer = 0.05; // add a 5% buffer to max token count
 
     // class constructor
     /**
@@ -267,7 +268,7 @@ EOD;
         $provider = new EncoderProvider();
         $encoder = $provider->getForModel('gpt-4');
 
-        $maxTokens = $this->getMaxTokenGuessByModel($this->model);
+        $maxTokens = $this->getMaxTokenGuessByModel($this->model) * (1.0 - $this->maxTokensBuffer);
 
         $newContext = [];
         $tokenUsage = 0;

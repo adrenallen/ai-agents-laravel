@@ -13,6 +13,7 @@ class ChatGPT extends AbstractChatModel
     protected $model;
     protected $client;
     protected $openAiOptions;
+    public $maxTokensBuffer = 0.05; // 5% buffer for max tokens
 
     // class constructor
     /**
@@ -249,7 +250,7 @@ class ChatGPT extends AbstractChatModel
         $provider = new EncoderProvider();
         $encoder = $provider->getForModel($this->model);
 
-        $maxTokens = $this->getMaxTokenGuessByModel($this->model);
+        $maxTokens = $this->getMaxTokenGuessByModel($this->model) * (1.0 - $this->maxTokensBuffer);
 
         $newContext = [];
         $tokenUsage = 0;
