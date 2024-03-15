@@ -243,6 +243,8 @@ You may call them like this:
 </invoke>
 </function_calls>
 
+You must wait for the user to respond with the function_results.
+
 EOD;
 
             $message .= sprintf(
