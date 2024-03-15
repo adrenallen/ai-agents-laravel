@@ -2,9 +2,11 @@
 
 namespace Adrenallen\AiAgentsLaravel\ChatModels;
 
+use OpenAI;
 use Yethee\Tiktoken\EncoderProvider;
 
 use Adrenallen\AiAgentsLaravel\Agents\AgentFunction;
+use Illuminate\Support\Facades\Log;
 
 class AnthropicClaude extends AbstractChatModel
 {
@@ -122,6 +124,38 @@ class AnthropicClaude extends AbstractChatModel
         ]);
     }
 
+    // Override, we must combine all contexts that are the same "role" in a row into a single message
+    public function recordContext($message) {
+        if (count($this->context) > 0) {
+            $lastIdx = count($this->context) - 1;
+            $lastMessage = $this->context[$lastIdx];
+            if ($lastMessage['role'] == $message['role']) {
+                $this->context[$lastIdx]['content'] .= "\n" . $message['content'];
+                return;
+            }
+        }
+        parent::recordContext($message);
+    }
+
+    // Gets a new context based on the current context and the new message
+    // does not update this models context though! We record it after we get the response and it's successful
+    private function getContextForNewMessage($message) {
+        $newContext = [...$this->context];
+        if ($message) {
+            // if the last message in the context is the same role, combine them
+            if (count($newContext) > 0) {
+                $lastIdx = count($newContext) - 1;
+                $lastMessage = $newContext[$lastIdx];
+                if ($lastMessage['role'] == $message['role']) {
+                    $newContext[$lastIdx]['content'] .= "\n" . $message['content'];
+                    return $newContext;
+                }
+            }
+            $newContext[] = $message;
+        }
+        return $newContext;
+    }
+
     /**
      * sends a message to the open ai model and returns the message result
      *
@@ -130,13 +164,10 @@ class AnthropicClaude extends AbstractChatModel
     protected function sendMessage($messageObj): ChatModelResponse
     {
         // Build the new context
-        $newContext = [...$this->context];
-        if ($messageObj) {
-            $newContext[] = $messageObj;
-        }
+        $newContext = $this->getContextForNewMessage($messageObj);
 
         $options = [
-            'max_tokens' => "1024",
+            'max_tokens' => 1024,
             'model' => $this->model,
             'messages' => $this->getTokenPreppedContext($newContext),
             ...$this->claudeOptions,
@@ -166,7 +197,7 @@ class AnthropicClaude extends AbstractChatModel
      * Based on https://docs.anthropic.com/claude/docs/functions-external-tools
      */
     protected function convertFunctionsForModel(AgentFunction $function)
-    {        
+    {
          $parameters = [];
          foreach($function->parameters as $parameter) {
              $parameters[] = sprintf(
@@ -217,11 +248,11 @@ EOD;
                 "Here are the tools available: <tools>%s</tools>",
                 implode("", $this->functions)
             );
-            
+
         }
 
         return $message;
-        
+
     }
 
 
@@ -231,7 +262,7 @@ EOD;
     private function getTokenPreppedContext($context)
     {
         $provider = new EncoderProvider();
-        $encoder = $provider->getForModel("gpt-4");
+        $encoder = $provider->getForModel('gpt-4');
 
         $maxTokens = $this->getMaxTokenGuessByModel($this->model);
 
@@ -259,7 +290,7 @@ EOD;
     }
 
     // Given a model, it returns the max token count
-    // this is mostly a guess 
+    // this is mostly a guess
     private function getMaxTokenGuessByModel(string $model): int
     {
         switch ($model) {
@@ -288,19 +319,34 @@ EOD;
 
     private function parseFunctionCallString($functionCallString)
     {
-        $xml = simplexml_load_string($functionCallString);
-        if ($xml) {
-            $functionCall = [];
-            $functionCall['name'] = (string) $xml->invoke->tool_name;
-            $functionCall['arguments'] = [];
-            foreach ($xml->invoke->parameters->children() as $key => $value) {
-                $functionCall['arguments'][$key] = (string) $value;
+        $functionCalls = [];
+        $findXml = '/<function_calls>.*<\\\/function_calls>/gsU';
+        preg_match($findXml, $functionCallString, $matches);
+
+        foreach($matches as $match) {
+
+            // each of these looks like this
+            // <function_calls>\n<invoke>\n<tool_name>messageDriver<\/tool_name>\n<parameters>\n<message>I'm doing well, thanks for asking! I see you are currently at the Ullrich, Gottlieb and Zboncak stop. How is everything going there so far? Let me know if you need any assistance with this load.<\/message>\n<expectAnswer>true<\/expectAnswer>\n<\/parameters>\n<\/invoke>\n<\/function_calls>
+
+            // Make this xml compatible...
+            $xmlString = $match;
+            $xmlString = str_replace('\n', "\n", $xmlString);
+            $xmlString = str_replace("<\\/", "</", $xmlString);
+            $xmlString = str_replace('>\n<', '><', $xmlString);
+            $xml = simplexml_load_string($xmlString);
+            if ($xml) {
+                $functionCall = [];
+                $functionCall['name'] = (string) $xml->invoke->tool_name;
+                $functionCall['arguments'] = [];
+                foreach ($xml->invoke->parameters->children() as $key => $value) {
+                    $functionCall['arguments'][$key] = (string) $value;
+                }
+                $functionCalls[] = $functionCall;
             }
-            return $functionCall;
         }
 
-        return null;
-        
+        return $functionCalls;
+
     }
 
     private function formatFunctionResultString($functionName, $result)
