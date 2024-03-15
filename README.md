@@ -75,6 +75,8 @@ You can type `exit` to exit the chat.
 $chat = new \Adrenallen\AiAgentsLaravel\ChatModels\ChatGPT();
 // or
 $chat = new \Adrenallen\AiAgentsLaravel\ChatModels\AzureOpenAI();
+// or
+$chat = new \Adrenallen\AiAgentsLaravel\ChatModels\AnthropicClaude();
 
 $agent = new \Adrenallen\AiAgentsLaravel\Agents\TestingAgent($chat); // Ensures the agent gets a pre-prompt at creation
 $agent->ask("Hello, is this thing on?"); // Yes, I'm here. How can I assist you today?
@@ -162,6 +164,7 @@ It is highly encouraged that you place re-usable functions in a trait, and then 
 - GPT-3.5-turbo
 - GPT-4
 - Azure OpenAI
+- Anthropic Claude
 
 ### Adding a new chat model
 New models can be added by extending `AbstractChatModel`. This class provides the basic functionality required to interact with the chat model.
