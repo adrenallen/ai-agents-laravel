@@ -178,7 +178,7 @@ class AnthropicClaude extends AbstractChatModel
         $result = $this->client->getCompletion($options);
 
         if (isset($result['error'])) {
-            throw new \Exception($result['error']);
+            throw new \Exception(json_encode($result['error']));
         }
 
         if (!isset($result["content"][0]["text"])) {
