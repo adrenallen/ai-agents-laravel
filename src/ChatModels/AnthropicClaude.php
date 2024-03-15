@@ -184,9 +184,9 @@ class AnthropicClaude extends AbstractChatModel
 
         $this->recordContext(['role' => 'assistant', 'content' => $response]);
 
-        $functionCall = $this->parseFunctionCallString($response);
+        $functionCalls = $this->parseFunctionCallsString($response) ?? [];
 
-        return new ChatModelResponse($response, (array) $functionCall, null, [
+        return new ChatModelResponse($response, (array) $functionCalls, null, [
             'id' => $result['id'] ?? null,
             'model' => $result['model'] ?? null,
             'usage' => $result['usage'] ?? null
@@ -317,7 +317,7 @@ EOD;
         return $functionCall;
     }
 
-    private function parseFunctionCallString($functionCallString)
+    private function parseFunctionCallsString($functionCallString)
     {
         $functionCalls = [];
         $findXml = '/<function_calls>.*<\\\/function_calls>/gsU';
