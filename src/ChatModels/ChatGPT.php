@@ -181,11 +181,11 @@ class ChatGPT extends AbstractChatModel
 
         $this->recordContext($response->toArray());
 
-        $functionCall = (array) $response->functionCall ?? null;
+        $functionCall = ((array) $response->functionCall) ?? null;
 
         // TODO - check if the $result->finishReason == `function_call` and if so then
         // pass in the function call, otherwise dont?
-        return new ChatModelResponse($response->content, [$functionCall], null, [
+        return new ChatModelResponse($response->content, ($functionCall ? [$functionCall] : null), null, [
             'id' => $result->id ?? null,
             'created' => $result->created ?? null,
             'model' => $result->model ?? null,
