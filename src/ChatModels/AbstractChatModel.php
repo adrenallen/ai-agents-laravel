@@ -20,6 +20,11 @@ abstract class AbstractChatModel {
     public $context = [];   //running context that is sent to model for completions
     protected $functions = [];  // list of functions that the agent is allowed to use
     public $prePrompt = "";
+    
+    
+    // The max tokens to allow in an outgoing request, this overrides guessing the model max. 
+    // Helpful to truncate how much historical context you send out.
+    public ?int $maxContextHistoryTokens;    
 
 
     public function __construct($context = [], $prePrompt = "", $functions = []) {
