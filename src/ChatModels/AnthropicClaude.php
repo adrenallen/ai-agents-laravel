@@ -276,7 +276,7 @@ EOD;
         $provider = new EncoderProvider();
         $encoder = $provider->getForModel('gpt-4');
 
-        $maxTokens = $this->getMaxTokenGuessByModel($this->model) * (1.0 - $this->maxTokensBuffer);
+        $maxTokens = $this->maxContextHistoryTokens ?? $this->getMaxTokenGuessByModel($this->model) * (1.0 - $this->maxTokensBuffer);
 
         $newContext = [];
         $tokenUsage = 0;
