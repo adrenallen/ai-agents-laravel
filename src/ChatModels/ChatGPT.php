@@ -248,7 +248,11 @@ class ChatGPT extends AbstractChatModel
     private function getTokenPreppedContext($context)
     {
         $provider = new EncoderProvider();
-        $encoder = $provider->getForModel($this->model);
+        try {
+            $encoder = $provider->getForModel($this->model);
+        } catch (\Exception $e) {
+            $encoder = $provider->get('o200k_base');
+        }
 
         $maxTokens = $this->maxContextHistoryTokens ?? $this->getMaxTokenGuessByModel($this->model) * (1.0 - $this->maxTokensBuffer);
 
