@@ -305,6 +305,7 @@ class ChatGPT extends AbstractChatModel
             case 'gpt-4-1106-preview':
             case 'gpt-4-vision-preview':
             case 'gpt-4-1106-vision-preview':
+            case 'gpt-4o':
                 return 128000;
             case 'gpt-4':
             case 'gpt-4-0613':
