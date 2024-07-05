@@ -7,7 +7,7 @@ use Yethee\Tiktoken\EncoderProvider;
 
 use Adrenallen\AiAgentsLaravel\Agents\AgentFunction;
 
-class ChatGPTUpdated extends AbstractChatModel
+class ChatGPT extends AbstractChatModel
 {
 
     protected $model;
