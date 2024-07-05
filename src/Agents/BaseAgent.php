@@ -19,7 +19,7 @@ class BaseAgent {
     public $chatModel;
     public int $maxFunctionCalls = 10;  //max number of function loops that can occur without more user input.
     public string $prePrompt = "You are a helpful generalist assistant.";
-    
+
     // deprecated - Use onChatModelResponse instead
     public $lastCallMetadata;
 
@@ -131,7 +131,7 @@ class BaseAgent {
      * onChatModelResponse
      * This function is called when the agent receives a response from the chat model
      * You can use this to record things like usage data
-     * 
+     *
      * @param ChatModelResponse $response
      */
     protected function onChatModelResponse(ChatModelResponse $response) : void {
@@ -142,7 +142,7 @@ class BaseAgent {
     protected function parseModelResponse(ChatModelResponse $response) : string {
 
         $this->onChatModelResponse($response);
-        
+
         $this->lastCallMetadata = $response->metadata;
 
         $this->functionCallLoops++;
@@ -159,6 +159,8 @@ class BaseAgent {
 
         if ($response->functionCalls){
             foreach($response->functionCalls as $idx => $functionCall) {
+                $functionCall = $functionCall['function'] ?? $functionCall; // handling for old way of tool calling in openai
+
                 $functionName = $functionCall['name'];
                 $functionArgs = $functionCall['arguments'];
 

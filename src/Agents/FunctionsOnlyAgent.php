@@ -37,7 +37,7 @@ class FunctionsOnlyAgent extends BaseAgent {
     protected $hasCalledComplete = false;
     protected $functionCallLoops = 0;
     protected function parseModelResponse(ChatModelResponse $response) : string {
-        
+
         $this->onChatModelResponse($response);
 
         $this->lastCallMetadata = $response->metadata;
@@ -56,6 +56,8 @@ class FunctionsOnlyAgent extends BaseAgent {
 
         if ($response->functionCalls){
             foreach($response->functionCalls as $idx => $functionCall) {
+                $functionCall = $functionCall['function'] ?? $functionCall; // handling for old way of tool calling in openai
+
                 $functionName = $functionCall['name'];
                 $functionArgs = $functionCall['arguments'];
 

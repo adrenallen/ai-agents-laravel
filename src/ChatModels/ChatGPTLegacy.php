@@ -7,7 +7,7 @@ use Yethee\Tiktoken\EncoderProvider;
 
 use Adrenallen\AiAgentsLaravel\Agents\AgentFunction;
 
-class ChatGPTUpdated extends AbstractChatModel
+class ChatGPTLegacy extends AbstractChatModel
 {
 
     protected $model;
@@ -45,18 +45,18 @@ class ChatGPTUpdated extends AbstractChatModel
     public function sendFunctionCall(string $functionName): ChatModelResponse
     {
 
-        // if openAiOptions has a `tool_choice` then we need to save it, else null
-        $oldFunctionRequirement = $this->openAiOptions['tool_choice'] ?? null;
+        // if openAiOptions has a `function_call` then we need to save it, else null
+        $oldFunctionRequirement = $this->openAiOptions['function_call'] ?? null;
 
-        // Set the option to force tool_choice
-        $this->openAiOptions['tool_choice'] = ["type" => "function", "function" => ["name" => $functionName]];
+        // Set the option to force function_call
+        $this->openAiOptions['function_call'] = ["name" => $functionName];
 
         $result = $this->sendMessage(null);
 
         //Unset the temp requirement and set it back to what it was previously
-        unset($this->openAiOptions['tool_choice']);
+        unset($this->openAiOptions['function_call']);
         if ($oldFunctionRequirement) {
-            $this->openAiOptions['tool_choice'] = $oldFunctionRequirement;
+            $this->openAiOptions['function_call'] = $oldFunctionRequirement;
         }
 
         return $result;
@@ -80,7 +80,7 @@ class ChatGPTUpdated extends AbstractChatModel
         if (is_array($result)) {
             $convertedResult = json_encode($result);
         }
-        return $this->sendMessage(['role' => 'tool', 'name' => $functionName, 'content' => (string)$convertedResult]);
+        return $this->sendMessage(['role' => 'function', 'name' => $functionName, 'content' => (string)$convertedResult]);
     }
 
     /**
@@ -124,7 +124,7 @@ class ChatGPTUpdated extends AbstractChatModel
         if ($result == "") {
             return; // Don't record empty results (like from a thought or observation)
         }
-        $this->recordContext(['role' => 'tool', 'name' => $functionName, 'content' => $result]);
+        $this->recordContext(['role' => 'function', 'name' => $functionName, 'content' => $result]);
     }
 
     /**
@@ -141,15 +141,9 @@ class ChatGPTUpdated extends AbstractChatModel
         $this->recordContext([
             'role' => 'assistant',
             'content' => null,
-            'tool_calls' => [
-                // TODO - support id and multi-func calls here
-                [
-                    'type' => 'function',
-                    'function' => [
-                        'name' => $functionName,
-                        'arguments' => json_encode($functionArguments)
-                    ]
-                ]
+            'function_call' => [
+                'name' => $functionName,
+                'arguments' => json_encode($functionArguments)
             ]
         ]);
     }
@@ -172,17 +166,13 @@ class ChatGPTUpdated extends AbstractChatModel
             'messages' => $this->getTokenPreppedContext($newContext),
             ...$this->openAiOptions,
         ];
-        logger()->info("In there");
-
-
 
         if (count($this->functions) > 0) {
-            $options['tools'] = $this->functions;
+            $options['functions'] = $this->functions;
         }
 
-        logger()->info("before chat create ");
         $result = $this->client->chat()->create($options);
-        logger()->info("Made it ");
+
         $response = $result->choices[0]->message;
 
         if ($messageObj) {
@@ -191,16 +181,11 @@ class ChatGPTUpdated extends AbstractChatModel
 
         $this->recordContext($response->toArray());
 
-        $toolCalls = ((array) $response->toolCalls) ?? null;
+        $functionCall = ((array) $response->functionCall) ?? null;
 
-        $toolCalls = json_decode(json_encode($toolCalls), true);
-        //logger()->info(print_r($toolCalls, true));
-        //logger()->info(print_r($response->content, true));
-        logger()->info("Sending on this response now", [$response->content, $toolCalls]);
-
-        // TODO - check if the $result->finishReason == `tool_calls` and if so then
+        // TODO - check if the $result->finishReason == `function_call` and if so then
         // pass in the function call, otherwise dont?
-        return new ChatModelResponse($response->content, $toolCalls, null, [
+        return new ChatModelResponse($response->content, ($functionCall ? [$functionCall] : null), null, [
             'id' => $result->id ?? null,
             'created' => $result->created ?? null,
             'model' => $result->model ?? null,
@@ -211,7 +196,25 @@ class ChatGPTUpdated extends AbstractChatModel
 
     /*
     * Converts a function from an AgentFunction into
-    * a form that open ai accepts
+    * a form that open ai accepts like below
+    * [
+    *       'name' => 'get_current_weather',
+    *       'description' => 'Get the current weather in a given location',
+    *       'parameters' => [
+    *           'type' => 'object',
+    *           'properties' => [
+    *               'location' => [
+    *                   'type' => 'string',
+    *                   'description' => 'The city and state, e.g. San Francisco, CA',
+    *               ],
+    *               'unit' => [
+    *                   'type' => 'string',
+    *                   'enum' => ['celsius', 'fahrenheit']
+    *               ],
+    *           ],
+    *           'required' => ['location'],
+    *       ],
+    *   ]
     */
     protected function convertFunctionsForModel(AgentFunction $function)
     {
@@ -224,21 +227,17 @@ class ChatGPTUpdated extends AbstractChatModel
         }
 
         return [
-            "type" => "function",
-            "function" => [
-                'name' => $function->name,
-                'description' => $function->description,
-                'parameters' => [
-                    'type' => 'object',
+            'name' => $function->name,
+            'description' => $function->description,
+            'parameters' => [
+                'type' => 'object',
 
-                    //convert to object so json_encode works as expected
-                    // and converts [] to {}
-                    'properties' => (object)$parameters,
+                //convert to object so json_encode works as expected
+                // and converts [] to {}
+                'properties' => (object)$parameters,
 
-                    'required' => $function->requiredParameters,
-                ]
+                'required' => $function->requiredParameters,
             ]
-
         ];
     }
 
@@ -268,8 +267,8 @@ class ChatGPTUpdated extends AbstractChatModel
             $tokens = $encoder->encode((string) $msg['content']);
 
             // If there is a function call then add those tokens too
-            if (array_key_exists('tool_calls', $msg)) {
-                $tokens = [...$tokens, $encoder->encode(json_encode($msg['tool_calls']))];
+            if (array_key_exists('function_call', $msg)) {
+                $tokens = [...$tokens, $encoder->encode(json_encode($msg['function_call']))];
             }
 
             if ($tokenUsage + count($tokens) > $maxTokens) {
