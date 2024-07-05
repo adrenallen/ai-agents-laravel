@@ -125,8 +125,22 @@ class BaseAgent {
         return $this->functionCallLoops > 1; // The model will always call once, if more than 1 then the agent called a function
     }
 
+    /**
+     * receiveChatModelResponse
+     * This function is called when the agent receives a response from the chat model
+     * You can use this to record things like usage data
+     * 
+     * @param ChatModelResponse $response
+     */
+    protected function receiveChatModelResponse(ChatModelResponse $response) : void {
+        // nothing, this is here to be overriden
+    }
+
     protected $functionCallLoops = 0;
     protected function parseModelResponse(ChatModelResponse $response) : string {
+
+        $this->receiveChatModelResponse($response);
+        
         $this->lastCallMetadata = $response->metadata;
 
         $this->functionCallLoops++;
