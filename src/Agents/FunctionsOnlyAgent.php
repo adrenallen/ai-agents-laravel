@@ -38,7 +38,7 @@ class FunctionsOnlyAgent extends BaseAgent {
     protected $functionCallLoops = 0;
     protected function parseModelResponse(ChatModelResponse $response) : string {
         
-        $this->receiveChatModelResponse($response);
+        $this->onChatModelResponse($response);
 
         $this->lastCallMetadata = $response->metadata;
 
