@@ -20,7 +20,7 @@ class BaseAgent {
     public int $maxFunctionCalls = 10;  //max number of function loops that can occur without more user input.
     public string $prePrompt = "You are a helpful generalist assistant.";
     
-    // deprecated - Use receiveChatModelResponse instead
+    // deprecated - Use onChatModelResponse instead
     public $lastCallMetadata;
 
     function __construct($chatModel) {
@@ -128,20 +128,20 @@ class BaseAgent {
     }
 
     /**
-     * receiveChatModelResponse
+     * onChatModelResponse
      * This function is called when the agent receives a response from the chat model
      * You can use this to record things like usage data
      * 
      * @param ChatModelResponse $response
      */
-    protected function receiveChatModelResponse(ChatModelResponse $response) : void {
+    protected function onChatModelResponse(ChatModelResponse $response) : void {
         // nothing, this is here to be overriden
     }
 
     protected $functionCallLoops = 0;
     protected function parseModelResponse(ChatModelResponse $response) : string {
 
-        $this->receiveChatModelResponse($response);
+        $this->onChatModelResponse($response);
         
         $this->lastCallMetadata = $response->metadata;
 
