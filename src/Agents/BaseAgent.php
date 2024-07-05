@@ -19,6 +19,8 @@ class BaseAgent {
     public $chatModel;
     public int $maxFunctionCalls = 10;  //max number of function loops that can occur without more user input.
     public string $prePrompt = "You are a helpful generalist assistant.";
+    
+    // deprecated - Use receiveChatModelResponse instead
     public $lastCallMetadata;
 
     function __construct($chatModel) {
