@@ -35,7 +35,7 @@ class AnthropicClaude extends AbstractChatModel
     }
 
     // Force the model to call the given function and provide its own parameters
-    public function sendFunctionCall(string $functionName, string $id = null): ChatModelResponse
+    public function sendFunctionCall(string $functionName): ChatModelResponse
     {
         // TODO - make this better using partial completions
         return $this->sendUserMessage("Call the function $functionName");
