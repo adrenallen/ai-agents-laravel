@@ -159,6 +159,7 @@ class BaseAgent {
 
         if ($response->functionCalls){
             foreach($response->functionCalls as $idx => $functionCall) {
+                $functionCallId = $functionCall['id'] ?? uniqid();
                 $functionCall = $functionCall['function'] ?? $functionCall; // handling for old way of tool calling in openai
 
                 $functionName = $functionCall['name'];
@@ -183,11 +184,12 @@ class BaseAgent {
                     return $this->parseModelResponse(
                         $this->chatModel->sendFunctionResult(
                             $functionName,
-                            $functionResult
+                            $functionResult,
+                            $functionCallId
                         )
                     );
                 } else {
-                    $this->chatModel->recordFunctionResult($functionName, $functionResult);
+                    $this->chatModel->recordFunctionResult($functionName, $functionResult, $functionCallId);
                 }
             }
 

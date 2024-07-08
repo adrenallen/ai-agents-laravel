@@ -42,14 +42,15 @@ class ChatGPT extends AbstractChatModel
     }
 
     // Force the model to call the given function and provide its own parameters
-    public function sendFunctionCall(string $functionName): ChatModelResponse
+    public function sendFunctionCall(string $functionName, string $id = null): ChatModelResponse
     {
+        $id = $id ?? uniqid();
 
         // if openAiOptions has a `tool_choice` then we need to save it, else null
         $oldFunctionRequirement = $this->openAiOptions['tool_choice'] ?? null;
 
         // Set the option to force tool_choice
-        $this->openAiOptions['tool_choice'] = ["type" => "function", "function" => ["name" => $functionName]];
+        $this->openAiOptions['tool_choice'] = ["id" => $id, "type" => "function", "function" => ["name" => $functionName]];
 
         $result = $this->sendMessage(null);
 
@@ -73,14 +74,15 @@ class ChatGPT extends AbstractChatModel
      * @param string $functionName
      * @param [type] $result
      */
-    public function sendFunctionResult(string $functionName, $result): ChatModelResponse
+    public function sendFunctionResult(string $functionName, mixed $result, string $id = null): ChatModelResponse
     {
+        $id = $id ?? uniqid();
         $convertedResult = $result;
 
         if (is_array($result)) {
             $convertedResult = json_encode($result);
         }
-        return $this->sendMessage(['role' => 'tool', 'name' => $functionName, 'content' => (string)$convertedResult]);
+        return $this->sendMessage(['tool_call_id' => $id, 'role' => 'tool', 'name' => $functionName, 'content' => (string)$convertedResult]);
     }
 
     /**
@@ -119,12 +121,13 @@ class ChatGPT extends AbstractChatModel
      * @param string $functionName
      * @param [type] $result
      */
-    public function recordFunctionResult(string $functionName, $result): void
+    public function recordFunctionResult(string $functionName, mixed $result, string $id = null): void
     {
+        $id = $id ?? uniqid();
         if ($result == "") {
             return; // Don't record empty results (like from a thought or observation)
         }
-        $this->recordContext(['role' => 'tool', 'name' => $functionName, 'content' => $result]);
+        $this->recordContext(['tool_call_id' => $id, 'role' => 'tool', 'name' => $functionName, 'content' => $result]);
     }
 
     /**
@@ -137,13 +140,15 @@ class ChatGPT extends AbstractChatModel
         $this->recordContext(['role' => 'assistant', 'content' => $message]);
     }
 
-    public function recordAssistantFunction($functionName, $functionArguments) : void{
+    public function recordAssistantFunction($functionName, $functionArguments, string $id = null) : void{
+        $id = $id ?? uniqid();
         $this->recordContext([
             'role' => 'assistant',
             'content' => null,
             'tool_calls' => [
                 // TODO - support id and multi-func calls here
                 [
+                    'id' => $id,
                     'type' => 'function',
                     'function' => [
                         'name' => $functionName,
@@ -172,17 +177,12 @@ class ChatGPT extends AbstractChatModel
             'messages' => $this->getTokenPreppedContext($newContext),
             ...$this->openAiOptions,
         ];
-        logger()->info("In there");
-
-
 
         if (count($this->functions) > 0) {
             $options['tools'] = $this->functions;
         }
 
-        logger()->info("before chat create ");
         $result = $this->client->chat()->create($options);
-        logger()->info("Made it ");
         $response = $result->choices[0]->message;
 
         if ($messageObj) {
@@ -194,9 +194,6 @@ class ChatGPT extends AbstractChatModel
         $toolCalls = ((array) $response->toolCalls) ?? null;
 
         $toolCalls = json_decode(json_encode($toolCalls), true);
-        //logger()->info(print_r($toolCalls, true));
-        //logger()->info(print_r($response->content, true));
-        logger()->info("Sending on this response now", [$response->content, $toolCalls]);
 
         // TODO - check if the $result->finishReason == `tool_calls` and if so then
         // pass in the function call, otherwise dont?
