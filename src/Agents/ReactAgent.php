@@ -85,6 +85,7 @@ class ReactAgent extends FunctionsOnlyAgent {
      */
     public function recordThought(string $thought) {
         // Nothing needs to happen, we don't really need to even add this to the context
+        return "recorded";
     }
 
     /**
@@ -96,6 +97,7 @@ class ReactAgent extends FunctionsOnlyAgent {
      */
     public function recordObservation(string $observation) {
         // Nothing needs to happen, we don't really need to even add this to the context
+        return "recorded";
     }
 
     /**

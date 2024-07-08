@@ -85,7 +85,7 @@ class FunctionsOnlyAgent extends BaseAgent {
                 if ($idx == count($response->functionCalls) - 1){
                     if ($this->returnOnFunctionCall) {
                         // record the result
-                        $this->chatModel->recordFunctionResult($functionName, $functionResult);
+                        $this->chatModel->recordFunctionResult($functionName, $functionResult, $functionCallId);
                         return "";
                     } else {
                         // let the agent react to the result!
