@@ -84,7 +84,6 @@ class ReactAgent extends FunctionsOnlyAgent {
      * @return void
      */
     public function recordThought(string $thought) {
-        // Nothing needs to happen, we don't really need to even add this to the context
         return "recorded";
     }
 
@@ -96,7 +95,6 @@ class ReactAgent extends FunctionsOnlyAgent {
      * @return void
      */
     public function recordObservation(string $observation) {
-        // Nothing needs to happen, we don't really need to even add this to the context
         return "recorded";
     }
 
@@ -107,7 +105,7 @@ class ReactAgent extends FunctionsOnlyAgent {
      */
     public function finish() {
         $this->state = self::STATE_COMPLETE;
-        // TODO - anything else needed here or are we just done and return/end loop?
+        return "recorded";
     }
 
     public function getAgentFunctions(): array {

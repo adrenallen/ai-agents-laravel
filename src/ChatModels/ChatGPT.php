@@ -42,15 +42,14 @@ class ChatGPT extends AbstractChatModel
     }
 
     // Force the model to call the given function and provide its own parameters
-    public function sendFunctionCall(string $functionName, string $id = null): ChatModelResponse
+    public function sendFunctionCall(string $functionName): ChatModelResponse
     {
-        $id = $id ?? uniqid();
 
         // if openAiOptions has a `tool_choice` then we need to save it, else null
         $oldFunctionRequirement = $this->openAiOptions['tool_choice'] ?? null;
 
         // Set the option to force tool_choice
-        $this->openAiOptions['tool_choice'] = ["id" => $id, "type" => "function", "function" => ["name" => $functionName]];
+        $this->openAiOptions['tool_choice'] = ["type" => "function", "function" => ["name" => $functionName]];
 
         $result = $this->sendMessage(null);
 
@@ -77,6 +76,7 @@ class ChatGPT extends AbstractChatModel
     public function sendFunctionResult(string $functionName, mixed $result, string $id = null): ChatModelResponse
     {
         $id = $id ?? uniqid();
+
         $convertedResult = $result;
 
         if (is_array($result)) {
@@ -124,14 +124,11 @@ class ChatGPT extends AbstractChatModel
     public function recordFunctionResult(string $functionName, mixed $result, string $id = null): void
     {
         $id = $id ?? uniqid();
-        if ($result == "") {
-            return; // Don't record empty results (like from a thought or observation)
-        }
         $this->recordContext(['tool_call_id' => $id, 'role' => 'tool', 'name' => $functionName, 'content' => $result]);
     }
 
     /**
-     * records an "assistant" rol message to the model
+     * records an "assistant" role message to the model
      *
      * @param string $message
      */

@@ -106,8 +106,8 @@ class BaseAgent {
      * @param string $functionName
      * @param [type] $result
      */
-    public function recordFunction($functionName, $result) : void {
-        $this->chatModel->recordFunctionResult($functionName, $result);
+    public function recordFunction($functionName, $result, string $id) : void {
+        $this->chatModel->recordFunctionResult($functionName, $result, $id);
     }
 
 
@@ -117,8 +117,8 @@ class BaseAgent {
      * @param string $functionName
      * @param array $functionArguments
      */
-    public function recordAssistantFunction($functionName, $functionArguments) : void{
-        $this->chatModel->recordAssistantFunction($functionName, $functionArguments);
+    public function recordAssistantFunction($functionName, $functionArguments, $id) : void{
+        $this->chatModel->recordAssistantFunction($functionName, $functionArguments, $id);
     }
 
     // Did the agent call a function in the last ask loop?
