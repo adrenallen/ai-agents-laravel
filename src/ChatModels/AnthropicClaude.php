@@ -35,7 +35,7 @@ class AnthropicClaude extends AbstractChatModel
     }
 
     // Force the model to call the given function and provide its own parameters
-    public function sendFunctionCall(string $functionName): ChatModelResponse
+    public function sendFunctionCall(string $functionName, string $id = null): ChatModelResponse
     {
         // TODO - make this better using partial completions
         return $this->sendUserMessage("Call the function $functionName");
@@ -52,7 +52,7 @@ class AnthropicClaude extends AbstractChatModel
      * @param string $functionName
      * @param [type] $result
      */
-    public function sendFunctionResult(string $functionName, $result): ChatModelResponse
+    public function sendFunctionResult(string $functionName, mixed $result, string $id = null): ChatModelResponse
     {
         return $this->sendMessage([
             'role' => 'user',
@@ -96,7 +96,7 @@ class AnthropicClaude extends AbstractChatModel
      * @param string $functionName
      * @param [type] $result
      */
-    public function recordFunctionResult(string $functionName, $result): void
+    public function recordFunctionResult(string $functionName, mixed $result, string $id = null): void
     {
         if ($result == "") {
             return; // Don't record empty results (like from a thought or observation)
@@ -118,7 +118,8 @@ class AnthropicClaude extends AbstractChatModel
         $this->recordContext(['role' => 'assistant', 'content' => $message]);
     }
 
-    public function recordAssistantFunction($functionName, $functionArguments) : void{
+    public function recordAssistantFunction($functionName, $functionArguments, string $id = null) : void
+    {
         $this->recordContext([
             'role' => 'assistant',
             'content' => $this->formatFunctionCallString($functionName, $functionArguments)

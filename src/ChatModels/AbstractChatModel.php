@@ -47,7 +47,7 @@ abstract class AbstractChatModel {
      *
      * @param string $functionName
      */
-    abstract public function sendFunctionCall(string $functionName): ChatModelResponse;
+    abstract public function sendFunctionCall(string $functionName, string $id = null): ChatModelResponse;
 
     /**
      * Sends a function result to the model
@@ -55,7 +55,7 @@ abstract class AbstractChatModel {
      * @param string $functionName
      * @param [type] $result
      */
-    abstract public function sendFunctionResult(string $functionName, $result): ChatModelResponse;
+    abstract public function sendFunctionResult(string $functionName, mixed $result, string $id = null): ChatModelResponse;
 
     /**
      * sends a "system" roled message to the model
@@ -88,12 +88,12 @@ abstract class AbstractChatModel {
     /**
      * Records a function result to the model, without getting a response
      */
-    abstract public function recordFunctionResult(string $functionName, $result): void;
+    abstract public function recordFunctionResult(string $functionName, mixed $result, string $id = null): void;
 
     /**
      * Records a function call from the model, without getting a response
      */
-    abstract public function recordAssistantFunction($functionName, $functionArguments) : void;
+    abstract public function recordAssistantFunction($functionName, $functionArguments, string $id = null) : void;
 
     /**
      * Records a "assistant" roled message to the model, without getting a response
