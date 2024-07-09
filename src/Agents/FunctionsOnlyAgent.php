@@ -37,7 +37,7 @@ class FunctionsOnlyAgent extends BaseAgent {
     protected $hasCalledComplete = false;
     protected $functionCallLoops = 0;
     protected function parseModelResponse(ChatModelResponse $response) : string {
-        
+
         $this->onChatModelResponse($response);
 
         $this->lastCallMetadata = $response->metadata;
@@ -56,6 +56,9 @@ class FunctionsOnlyAgent extends BaseAgent {
 
         if ($response->functionCalls){
             foreach($response->functionCalls as $idx => $functionCall) {
+                $functionCallId = $functionCall['id'] ?? uniqid();
+                $functionCall = $functionCall['function'] ?? $functionCall; // handling for old way of tool calling in openai
+
                 $functionName = $functionCall['name'];
                 $functionArgs = $functionCall['arguments'];
 
@@ -82,20 +85,21 @@ class FunctionsOnlyAgent extends BaseAgent {
                 if ($idx == count($response->functionCalls) - 1){
                     if ($this->returnOnFunctionCall) {
                         // record the result
-                        $this->chatModel->recordFunctionResult($functionName, $functionResult);
+                        $this->chatModel->recordFunctionResult($functionName, $functionResult, $functionCallId);
                         return "";
                     } else {
                         // let the agent react to the result!
                         return $this->parseModelResponse(
                             $this->chatModel->sendFunctionResult(
                                 $functionName,
-                                $functionResult
+                                $functionResult,
+                                $functionCallId
                             )
                         );
                     }
                 } else {
                     // Just record this one and move onto the next
-                    $this->chatModel->recordFunctionResult($functionName, $functionResult);
+                    $this->chatModel->recordFunctionResult($functionName, $functionResult, $functionCallId);
                 }
             }
 

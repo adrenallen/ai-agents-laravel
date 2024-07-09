@@ -84,7 +84,7 @@ class ReactAgent extends FunctionsOnlyAgent {
      * @return void
      */
     public function recordThought(string $thought) {
-        // Nothing needs to happen, we don't really need to even add this to the context
+        return "recorded";
     }
 
     /**
@@ -95,7 +95,7 @@ class ReactAgent extends FunctionsOnlyAgent {
      * @return void
      */
     public function recordObservation(string $observation) {
-        // Nothing needs to happen, we don't really need to even add this to the context
+        return "recorded";
     }
 
     /**
@@ -105,7 +105,7 @@ class ReactAgent extends FunctionsOnlyAgent {
      */
     public function finish() {
         $this->state = self::STATE_COMPLETE;
-        // TODO - anything else needed here or are we just done and return/end loop?
+        return "recorded";
     }
 
     public function getAgentFunctions(): array {
@@ -116,7 +116,12 @@ class ReactAgent extends FunctionsOnlyAgent {
             case self::STATE_OBSERVE:
                 return [$this->getAgentFunctionByMethodName('recordObservation')];
             case self::STATE_ACTION:
-                return parent::getAgentFunctions(); // Return the normal function options
+                $functions = parent::getAgentFunctions();
+                // remove recordThought and recordObservation from the options
+                $functions = array_filter($functions, function($function) {
+                    return !in_array($function->name, ['recordThought', 'recordObservation']);
+                });
+                return $functions;
             case self::STATE_COMPLETE:
                 throw new \Exception("The agent is in a completed state and should not be asked further questions without a reset.");
         }

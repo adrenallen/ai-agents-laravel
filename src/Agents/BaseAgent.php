@@ -19,7 +19,7 @@ class BaseAgent {
     public $chatModel;
     public int $maxFunctionCalls = 10;  //max number of function loops that can occur without more user input.
     public string $prePrompt = "You are a helpful generalist assistant.";
-    
+
     // deprecated - Use onChatModelResponse instead
     public $lastCallMetadata;
 
@@ -106,8 +106,8 @@ class BaseAgent {
      * @param string $functionName
      * @param [type] $result
      */
-    public function recordFunction($functionName, $result) : void {
-        $this->chatModel->recordFunctionResult($functionName, $result);
+    public function recordFunction($functionName, $result, string $id) : void {
+        $this->chatModel->recordFunctionResult($functionName, $result, $id);
     }
 
 
@@ -117,8 +117,8 @@ class BaseAgent {
      * @param string $functionName
      * @param array $functionArguments
      */
-    public function recordAssistantFunction($functionName, $functionArguments) : void{
-        $this->chatModel->recordAssistantFunction($functionName, $functionArguments);
+    public function recordAssistantFunction($functionName, $functionArguments, $id) : void{
+        $this->chatModel->recordAssistantFunction($functionName, $functionArguments, $id);
     }
 
     // Did the agent call a function in the last ask loop?
@@ -131,7 +131,7 @@ class BaseAgent {
      * onChatModelResponse
      * This function is called when the agent receives a response from the chat model
      * You can use this to record things like usage data
-     * 
+     *
      * @param ChatModelResponse $response
      */
     protected function onChatModelResponse(ChatModelResponse $response) : void {
@@ -142,7 +142,7 @@ class BaseAgent {
     protected function parseModelResponse(ChatModelResponse $response) : string {
 
         $this->onChatModelResponse($response);
-        
+
         $this->lastCallMetadata = $response->metadata;
 
         $this->functionCallLoops++;
@@ -159,6 +159,9 @@ class BaseAgent {
 
         if ($response->functionCalls){
             foreach($response->functionCalls as $idx => $functionCall) {
+                $functionCallId = $functionCall['id'] ?? uniqid();
+                $functionCall = $functionCall['function'] ?? $functionCall; // handling for old way of tool calling in openai
+
                 $functionName = $functionCall['name'];
                 $functionArgs = $functionCall['arguments'];
 
@@ -181,11 +184,12 @@ class BaseAgent {
                     return $this->parseModelResponse(
                         $this->chatModel->sendFunctionResult(
                             $functionName,
-                            $functionResult
+                            $functionResult,
+                            $functionCallId
                         )
                     );
                 } else {
-                    $this->chatModel->recordFunctionResult($functionName, $functionResult);
+                    $this->chatModel->recordFunctionResult($functionName, $functionResult, $functionCallId);
                 }
             }
 

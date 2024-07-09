@@ -20,11 +20,11 @@ abstract class AbstractChatModel {
     public $context = [];   //running context that is sent to model for completions
     protected $functions = [];  // list of functions that the agent is allowed to use
     public $prePrompt = "";
-    
-    
-    // The max tokens to allow in an outgoing request, this overrides guessing the model max. 
+
+
+    // The max tokens to allow in an outgoing request, this overrides guessing the model max.
     // Helpful to truncate how much historical context you send out.
-    public ?int $maxContextHistoryTokens;    
+    public ?int $maxContextHistoryTokens;
 
 
     public function __construct($context = [], $prePrompt = "", $functions = []) {
@@ -55,7 +55,7 @@ abstract class AbstractChatModel {
      * @param string $functionName
      * @param [type] $result
      */
-    abstract public function sendFunctionResult(string $functionName, $result): ChatModelResponse;
+    abstract public function sendFunctionResult(string $functionName, mixed $result, string $id = null): ChatModelResponse;
 
     /**
      * sends a "system" roled message to the model
@@ -88,12 +88,12 @@ abstract class AbstractChatModel {
     /**
      * Records a function result to the model, without getting a response
      */
-    abstract public function recordFunctionResult(string $functionName, $result): void;
+    abstract public function recordFunctionResult(string $functionName, mixed $result, string $id = null): void;
 
     /**
      * Records a function call from the model, without getting a response
      */
-    abstract public function recordAssistantFunction($functionName, $functionArguments) : void;
+    abstract public function recordAssistantFunction($functionName, $functionArguments, string $id = null) : void;
 
     /**
      * Records a "assistant" roled message to the model, without getting a response
@@ -114,11 +114,18 @@ abstract class AbstractChatModel {
 
 
     public function setFunctions($functions = []) {
+
+        // Clear current before resetting
+        $this->functions = [];
+
         // Parse the functions we get from AgentFunction into a format
         // the model can understand
         foreach($functions as $function) {
             $this->functions[] = $this->convertFunctionsForModel($function);
         }
+
+        // only unique functions
+        $this->functions = array_unique($this->functions, SORT_REGULAR);
     }
 
 
