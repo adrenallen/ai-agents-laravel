@@ -156,7 +156,7 @@ class AnthropicClaude extends AbstractChatModel
                     'type' => 'tool_use',
                     'id' => $id ?? uniqid(),
                     'name' => $functionName,
-                    'inputs' => $functionArguments,
+                    'input' => $functionArguments,
                 ]
             ]
         ]);
@@ -168,7 +168,7 @@ class AnthropicClaude extends AbstractChatModel
             $lastIdx = count($this->context) - 1;
             $lastMessage = $this->context[$lastIdx];
             if ($lastMessage['role'] == $message['role']) {
-                $this->context[$lastIdx]['content'] = array_merge($message['content'], $this->context[$lastIdx]['content']);
+                $this->context[$lastIdx]['content'] = $this->mergeAndOrderSameContents($message['content'], $this->context[$lastIdx]['content']);
                 return;
             }
         }
@@ -185,13 +185,31 @@ class AnthropicClaude extends AbstractChatModel
                 $lastIdx = count($newContext) - 1;
                 $lastMessage = $newContext[$lastIdx];
                 if ($lastMessage['role'] == $message['role']) {
-                    $newContext[$lastIdx]['content'] = array_merge($message['content'], $newContext[$lastIdx]['content']);
+                    $newContext[$lastIdx]['content'] = $this->mergeAndOrderSameContents($message['content'], $newContext[$lastIdx]['content']);
                     return $newContext;
                 }
             }
             $newContext[] = $message;
         }
         return $newContext;
+    }
+
+    private function mergeAndOrderSameContents($content1, $content2)
+    {
+        $result = array_merge($content1, $content2);
+
+        // order $result by if 'tool_result' it should be first
+        usort($result, function($a, $b) {
+            if ($a['type'] == 'tool_result') {
+                return -1;
+            }
+            if ($b['type'] == 'tool_result') {
+                return 1;
+            }
+            return 0;
+        });
+
+        return $result;
     }
 
     /**
