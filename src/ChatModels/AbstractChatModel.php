@@ -114,11 +114,18 @@ abstract class AbstractChatModel {
 
 
     public function setFunctions($functions = []) {
+
+        // Clear current before resetting
+        $this->functions = [];
+
         // Parse the functions we get from AgentFunction into a format
         // the model can understand
         foreach($functions as $function) {
             $this->functions[] = $this->convertFunctionsForModel($function);
         }
+
+        // only unique functions
+        $this->functions = array_unique($this->functions, SORT_REGULAR);
     }
 
 
