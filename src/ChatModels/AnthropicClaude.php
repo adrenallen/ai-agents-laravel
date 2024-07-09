@@ -37,8 +37,21 @@ class AnthropicClaude extends AbstractChatModel
     // Force the model to call the given function and provide its own parameters
     public function sendFunctionCall(string $functionName): ChatModelResponse
     {
-        // TODO - make this better using partial completions
-        return $this->sendUserMessage("Call the function $functionName");
+        // if openAiOptions has a `tool_choice` then we need to save it, else null
+        $oldFunctionRequirement = $this->claudeOptions['tool_choice'] ?? null;
+
+        // Set the option to force tool_choice
+        $this->claudeOptions['tool_choice'] = ["type" => "tool", "name" => $functionName];
+
+        $result = $this->sendMessage(null);
+
+        //Unset the temp requirement and set it back to what it was previously
+        unset($this->claudeOptions['tool_choice']);
+        if ($oldFunctionRequirement) {
+            $this->claudeOptions['tool_choice'] = $oldFunctionRequirement;
+        }
+
+        return $result;
     }
 
     public function generate() : ChatModelResponse
@@ -54,9 +67,20 @@ class AnthropicClaude extends AbstractChatModel
      */
     public function sendFunctionResult(string $functionName, mixed $result, string $id = null): ChatModelResponse
     {
+        $id = $id ?? uniqid();
+
+        $convertedResult = $result;
+
+        if (is_array($result)) {
+            $convertedResult = json_encode($result);
+        }
         return $this->sendMessage([
             'role' => 'user',
-            'content' => $this->formatFunctionResultString($functionName, $result)
+            'content' => [
+                "type" => "tool_result",
+                "tool_use_id" => $id,
+                "content" => (string)$convertedResult
+            ]
         ]);
     }
 
@@ -98,13 +122,14 @@ class AnthropicClaude extends AbstractChatModel
      */
     public function recordFunctionResult(string $functionName, mixed $result, string $id = null): void
     {
-        if ($result == "") {
-            return; // Don't record empty results (like from a thought or observation)
-        }
-
+        $id = $id ?? uniqid();
         $this->recordContext([
             'role' => 'user',
-            'content' => $this->formatFunctionResultString($functionName, $result)
+            'content' => [
+                "type" => "tool_result",
+                "tool_use_id" => $id,
+                "content" => $result
+            ]
         ]);
     }
 
@@ -122,7 +147,12 @@ class AnthropicClaude extends AbstractChatModel
     {
         $this->recordContext([
             'role' => 'assistant',
-            'content' => $this->formatFunctionCallString($functionName, $functionArguments)
+            'content' => [
+                'type' => 'tool_use',
+                'id' => $id ?? uniqid(),
+                'name' => $functionName,
+                'inputs' => $functionArguments,
+            ]
         ]);
     }
 
@@ -176,6 +206,10 @@ class AnthropicClaude extends AbstractChatModel
             'system' => $this->getSystemMessage()
         ];
 
+        if (count($this->functions) > 0) {
+            $options['tools'] = $this->functions;
+        }
+
         $result = $this->client->getCompletion($options);
 
         if (isset($result['error'])) {
@@ -194,8 +228,7 @@ class AnthropicClaude extends AbstractChatModel
 
         $this->recordContext(['role' => 'assistant', 'content' => $response]);
 
-
-        $functionCalls = $this->parseFunctionCallsString($response) ?? [];
+        $functionCalls = $this->parseFunctionCalls($response) ?? [];
 
         return new ChatModelResponse($response, (array) $functionCalls, null, [
             'id' => $result['id'] ?? null,
@@ -209,63 +242,33 @@ class AnthropicClaude extends AbstractChatModel
      */
     protected function convertFunctionsForModel(AgentFunction $function)
     {
-         $parameters = [];
-         foreach($function->parameters as $parameter) {
-             $parameters[] = sprintf(
-                '<parameter><name>%s</name><type>%s</type><description>%s</description></parameter>',
-                $parameter["name"],
-                $parameter["type"],
-                $parameter["description"]
-             );
-         }
+        $parameters = [];
+        foreach ($function->parameters as $parameter) {
+            $parameters[$parameter["name"]] = [
+                'type' => $parameter["type"],
+                'description' => $parameter["description"],
+            ];
+        }
 
-        return sprintf(
-            '<tool_description>
-            <tool_name>%s</tool_name>
-            <description>%s</description>
-            <parameters>
-            %s
-            </parameters>
-            </tool_description>',
-            $function->name,
-            $function->description,
-            implode("\n", $parameters)
-        );
+        return [
+            "name" => $function->name,
+            "description" => $function->description,
+            'input_schema' => [
+                'type' => 'object',
+
+                //convert to object so json_encode works as expected
+                // and converts [] to {}
+                'properties' => (object)$parameters,
+
+                'required' => $function->requiredParameters,
+            ]
+        ];
     }
 
     protected function getSystemMessage() : string {
         $message = $this->prePrompt;
 
-        if (count($this->functions) > 0) {
-
-            $message .= <<<EOD
-
-In this environment you have access to a set of tools you can use to answer the user's question.
-
-You may call them like this:
-<function_calls>
-<invoke>
-<tool_name>\$TOOL_NAME</tool_name>
-<parameters>
-<\$PARAMETER_NAME>\$PARAMETER_VALUE</\$PARAMETER_NAME>
-...
-</parameters>
-</invoke>
-</function_calls>
-
-You must wait for the user to respond with the function_results.
-
-EOD;
-
-            $message .= sprintf(
-                "Here are the tools available: <tools>%s</tools>",
-                implode("", $this->functions)
-            );
-
-        }
-
         return $message;
-
     }
 
 
@@ -312,80 +315,26 @@ EOD;
         }
     }
 
-    private function formatFunctionCallString($functionName, $functionArguments)
-    {
-        $functionCall = "<function_calls>";
-        $functionCall .= "<invoke>";
-        $functionCall .= "<tool_name>$functionName</tool_name>";
-        $functionCall .= "<parameters>";
-
-        foreach ($functionArguments as $key => $value) {
-            $functionCall .= "<$key>$value</$key>";
-        }
-
-        $functionCall .= "</parameters>";
-        $functionCall .= "</invoke>";
-        $functionCall .= "</function_calls>";
-
-        return $functionCall;
-    }
-
-    private function parseFunctionCallsString($functionCallString)
+    private function parseFunctionCalls($response)
     {
         $functionCalls = [];
-        $findXml = '/<function_calls>.*<\/function_calls>/Ums';
-        preg_match_all($findXml, $functionCallString, $matches, PREG_SET_ORDER, 0);
 
-        foreach($matches as $match) {
+        $actions = $response['content'];
 
-            // each of these looks like this
-            // <function_calls>\n<invoke>\n<tool_name>messageDriver<\/tool_name>\n<parameters>\n<message>I'm doing well, thanks for asking! I see you are currently at the Ullrich, Gottlieb and Zboncak stop. How is everything going there so far? Let me know if you need any assistance with this load.<\/message>\n<expectAnswer>true<\/expectAnswer>\n<\/parameters>\n<\/invoke>\n<\/function_calls>
-
-            // Make this xml compatible...
-            $xmlString = $match[0];
-            $xmlString = str_replace('\n', "\n", $xmlString);
-            $xmlString = str_replace("<\\/", "</", $xmlString);
-            $xmlString = str_replace('>\n<', '><', $xmlString);
-            $xml = simplexml_load_string($xmlString);
-            if ($xml) {
-                $functionCall = [];
-                $functionCall['name'] = (string) $xml->invoke->tool_name;
-                $functionCall['arguments'] = [];
-                if ($xml->invoke->parameters->children()) {
-                    foreach ($xml->invoke->parameters->children() as $key => $value) {
-                        $functionCall['arguments'][$key] = (string) $value;
-                    }
-                }
-                $functionCalls[] = $functionCall;
+        // foreach $actions if "type" == "tool_use" then add to functionCalls
+        foreach($actions as $action) {
+            if ($action['type'] == 'tool_use') {
+                $functionCalls[] = [
+                    'name' => $action['name'],
+                    'arguments' => $action['inputs'],
+                    'id' => $action['id']
+                ];
             }
         }
 
         return $functionCalls;
-
-    }
-
-    private function formatFunctionResultString($functionName, $result)
-    {
-
-        $convertedResult = $result;
-
-        if (is_array($result)) {
-            $convertedResult = json_encode($result);
-        }
-
-        return sprintf('
-                <function_results>
-                <result>
-                <tool_name>%s</tool_name>
-                <stdout>
-                %s
-                </stdout>
-                </result>
-                </function_results>
-            ', $functionName, $convertedResult);
     }
 }
-
 
 class AnthropicClient {
     // constructor
