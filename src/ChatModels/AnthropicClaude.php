@@ -149,15 +149,19 @@ class AnthropicClaude extends AbstractChatModel
 
     public function recordAssistantFunction($functionName, $functionArguments, string $id = null) : void
     {
+        $content = [
+            'type' => 'tool_use',
+            'id' => $id ?? uniqid(),
+            'name' => $functionName,
+        ];
+
+        if (count($functionArguments) > 0) {
+            $content['input'] = $functionArguments;
+        }
         $this->recordContext([
             'role' => 'assistant',
             'content' => [
-                [
-                    'type' => 'tool_use',
-                    'id' => $id ?? uniqid(),
-                    'name' => $functionName,
-                    'input' => $functionArguments,
-                ]
+                $content
             ]
         ]);
     }
@@ -234,6 +238,7 @@ class AnthropicClaude extends AbstractChatModel
             $options['tools'] = $this->functions;
         }
 
+
         $result = $this->client->getCompletion($options);
 
         if (isset($result['error'])) {
@@ -253,9 +258,14 @@ class AnthropicClaude extends AbstractChatModel
         }
 
         // Just pull the concat into history
-        $this->recordContext($result);
+        $contextResult = [
+            'content' => $result['content'],
+            'role' => $result['role']
+        ];
+        $this->recordContext($contextResult);
 
         $functionCalls = $this->parseFunctionCalls($result) ?? [];
+
 
         return new ChatModelResponse($response, (array) $functionCalls, null, [
             'id' => $result['id'] ?? null,

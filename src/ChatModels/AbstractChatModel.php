@@ -123,6 +123,9 @@ abstract class AbstractChatModel {
         foreach($functions as $function) {
             $this->functions[] = $this->convertFunctionsForModel($function);
         }
+
+        // only unique functions
+        $this->functions = array_unique($this->functions, SORT_REGULAR);
     }
 
 

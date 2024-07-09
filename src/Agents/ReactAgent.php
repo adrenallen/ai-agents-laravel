@@ -116,7 +116,12 @@ class ReactAgent extends FunctionsOnlyAgent {
             case self::STATE_OBSERVE:
                 return [$this->getAgentFunctionByMethodName('recordObservation')];
             case self::STATE_ACTION:
-                return parent::getAgentFunctions(); // Return the normal function options
+                $functions = parent::getAgentFunctions();
+                // remove recordThought and recordObservation from the options
+                $functions = array_filter($functions, function($function) {
+                    return !in_array($function->name, ['recordThought', 'recordObservation']);
+                });
+                return $functions;
             case self::STATE_COMPLETE:
                 throw new \Exception("The agent is in a completed state and should not be asked further questions without a reset.");
         }
