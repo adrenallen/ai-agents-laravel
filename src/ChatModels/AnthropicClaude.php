@@ -31,7 +31,7 @@ class AnthropicClaude extends AbstractChatModel
      */
     public function sendUserMessage($message): ChatModelResponse
     {
-        return $this->sendMessage(['role' => 'user', 'content' => $message]);
+        return $this->sendMessage(['role' => 'user', 'content' => [['type' => 'text', 'text' => $message]]]);
     }
 
     // Force the model to call the given function and provide its own parameters
@@ -77,9 +77,11 @@ class AnthropicClaude extends AbstractChatModel
         return $this->sendMessage([
             'role' => 'user',
             'content' => [
-                "type" => "tool_result",
-                "tool_use_id" => $id,
-                "content" => (string)$convertedResult
+                [
+                    "type" => "tool_result",
+                    "tool_use_id" => $id,
+                    "content" => (string)$convertedResult
+                ]
             ]
         ]);
     }
@@ -91,7 +93,7 @@ class AnthropicClaude extends AbstractChatModel
      */
     public function sendSystemMessage($message): ChatModelResponse
     {
-        return $this->sendMessage(['role' => 'user', 'content' => $message]);
+        return $this->sendMessage(['role' => 'user', 'content' => [['type' => 'text', 'text' => $message]]]);
     }
 
     /**
@@ -101,7 +103,7 @@ class AnthropicClaude extends AbstractChatModel
      */
     public function recordSystemMessage(string $message): void
     {
-        $this->recordContext(['role' => 'user', 'content' => $message]);
+        $this->recordContext(['role' => 'user', 'content' => [['type' => 'text', 'text' => $message]]]);
     }
 
     /**
@@ -111,7 +113,7 @@ class AnthropicClaude extends AbstractChatModel
      */
     public function recordUserMessage(string $message): void
     {
-        $this->recordContext(['role' => 'user', 'content' => $message]);
+        $this->recordContext(['role' => 'user', 'content' => [['type' => 'text', 'text' => $message]]]);
     }
 
     /**
@@ -126,9 +128,11 @@ class AnthropicClaude extends AbstractChatModel
         $this->recordContext([
             'role' => 'user',
             'content' => [
-                "type" => "tool_result",
-                "tool_use_id" => $id,
-                "content" => $result
+                [
+                    "type" => "tool_result",
+                    "tool_use_id" => $id,
+                    "content" => $result
+                ]
             ]
         ]);
     }
@@ -140,7 +144,7 @@ class AnthropicClaude extends AbstractChatModel
      */
     public function recordAssistantMessage(string $message): void
     {
-        $this->recordContext(['role' => 'assistant', 'content' => $message]);
+        $this->recordContext(['role' => 'assistant', 'content' => [['type' => 'text', 'text' => $message]]]);
     }
 
     public function recordAssistantFunction($functionName, $functionArguments, string $id = null) : void
@@ -148,10 +152,12 @@ class AnthropicClaude extends AbstractChatModel
         $this->recordContext([
             'role' => 'assistant',
             'content' => [
-                'type' => 'tool_use',
-                'id' => $id ?? uniqid(),
-                'name' => $functionName,
-                'inputs' => $functionArguments,
+                [
+                    'type' => 'tool_use',
+                    'id' => $id ?? uniqid(),
+                    'name' => $functionName,
+                    'inputs' => $functionArguments,
+                ]
             ]
         ]);
     }
@@ -162,7 +168,7 @@ class AnthropicClaude extends AbstractChatModel
             $lastIdx = count($this->context) - 1;
             $lastMessage = $this->context[$lastIdx];
             if ($lastMessage['role'] == $message['role']) {
-                $this->context[$lastIdx]['content'] .= "\n" . $message['content'];
+                $this->context[$lastIdx]['content'] = array_merge($message['content'], $this->context[$lastIdx]['content']);
                 return;
             }
         }
@@ -179,7 +185,7 @@ class AnthropicClaude extends AbstractChatModel
                 $lastIdx = count($newContext) - 1;
                 $lastMessage = $newContext[$lastIdx];
                 if ($lastMessage['role'] == $message['role']) {
-                    $newContext[$lastIdx]['content'] .= "\n" . $message['content'];
+                    $newContext[$lastIdx]['content'] = array_merge($message['content'], $newContext[$lastIdx]['content']);
                     return $newContext;
                 }
             }
@@ -216,19 +222,22 @@ class AnthropicClaude extends AbstractChatModel
             throw new \Exception(json_encode($result['error']));
         }
 
-        if (!isset($result["content"][0]["text"])) {
-            throw new \Exception("No text in response from model: ". json_encode($result));
+        // response text should be in here as a "text" entry. So find them all and combine in weird case if there are many
+        $response = "";
+        foreach ($result['content'] as $content) {
+            if ($content['type'] == 'text') {
+                $response .= $content['text'];
+            }
         }
-
-        $response = $result["content"][0]["text"];
 
         if ($messageObj) {
             $this->recordContext($messageObj);
         }
 
-        $this->recordContext(['role' => 'assistant', 'content' => $response]);
+        // Just pull the concat into history
+        $this->recordContext($result);
 
-        $functionCalls = $this->parseFunctionCalls($response) ?? [];
+        $functionCalls = $this->parseFunctionCalls($result) ?? [];
 
         return new ChatModelResponse($response, (array) $functionCalls, null, [
             'id' => $result['id'] ?? null,
@@ -290,7 +299,7 @@ class AnthropicClaude extends AbstractChatModel
 
         // Go through context from newest first, dropping oldest ones off
         foreach (array_reverse($context) as $msg) {
-            $tokens = $encoder->encode((string) $msg['content']);
+            $tokens = $encoder->encode(json_encode($msg['content']));
 
             if ($tokenUsage + count($tokens) > $maxTokens) {
                 break; //we have max tokens so break out and return
@@ -326,7 +335,7 @@ class AnthropicClaude extends AbstractChatModel
             if ($action['type'] == 'tool_use') {
                 $functionCalls[] = [
                     'name' => $action['name'],
-                    'arguments' => $action['inputs'],
+                    'arguments' => $action['input'],
                     'id' => $action['id']
                 ];
             }
