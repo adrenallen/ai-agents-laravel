@@ -125,9 +125,9 @@ class FunctionsOnlyAgent extends BaseAgent {
     /**
      * @aiagent-description Call this when you are done with all tasks and want to return to the user
      *
-     * @return void
+     * @return mixed
      */
-    public function completeTask() : void {
+    public function completeTask() : mixed {
         $this->hasCalledComplete = true;
     }
 

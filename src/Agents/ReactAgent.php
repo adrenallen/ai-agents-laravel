@@ -81,7 +81,7 @@ class ReactAgent extends FunctionsOnlyAgent {
      *
      * @param string $thought
      *
-     * @return void
+     * @return mixed
      */
     public function recordThought(string $thought) {
         return "recorded";
@@ -92,7 +92,7 @@ class ReactAgent extends FunctionsOnlyAgent {
      *
      * @param string $observation
      *
-     * @return void
+     * @return mixed
      */
     public function recordObservation(string $observation) {
         return "recorded";
@@ -103,9 +103,10 @@ class ReactAgent extends FunctionsOnlyAgent {
      *
      * @return void
      */
-    public function finish() {
+    public function completeTask() : mixed {
+        parent::completeTask();
         $this->state = self::STATE_COMPLETE;
-        return "recorded";
+        return "finished";
     }
 
     public function getAgentFunctions(): array {
