@@ -129,6 +129,7 @@ class FunctionsOnlyAgent extends BaseAgent {
      */
     public function completeTask() : mixed {
         $this->hasCalledComplete = true;
+        return null;
     }
 
 
