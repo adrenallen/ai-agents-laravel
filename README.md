@@ -1,5 +1,5 @@
 # AI Agents for Laravel
-[![Latest Stable Version](http://poser.pugx.org/adrenallen/ai-agents-laravel/v)](https://packagist.org/packages/adrenallen/ai-agents-laravel) [![Latest Unstable Version](http://poser.pugx.org/adrenallen/ai-agents-laravel/v/unstable)](https://packagist.org/packages/adrenallen/ai-agents-laravel)  [![License](http://poser.pugx.org/adrenallen/ai-agents-laravel/license)](https://packagist.org/packages/adrenallen/ai-agents-laravel) [![PHP Version Require](http://poser.pugx.org/adrenallen/ai-agents-laravel/require/php)](https://packagist.org/packages/adrenallen/ai-agents-laravel)
+[![Latest Stable Version](https://poser.pugx.org/adrenallen/ai-agents-laravel/v)](https://packagist.org/packages/adrenallen/ai-agents-laravel) [![Latest Unstable Version](https://poser.pugx.org/adrenallen/ai-agents-laravel/v/unstable)](https://packagist.org/packages/adrenallen/ai-agents-laravel)  [![License](https://poser.pugx.org/adrenallen/ai-agents-laravel/license)](https://packagist.org/packages/adrenallen/ai-agents-laravel) [![PHP Version Require](https://poser.pugx.org/adrenallen/ai-agents-laravel/require/php)](https://packagist.org/packages/adrenallen/ai-agents-laravel)
 
 Building with AI shouldn't be difficult, and AI Agents does its best to make it easy to build with AI inside of Laravel.
 
@@ -175,3 +175,6 @@ Opening new issues is encouraged if you have any questions, issues, or ideas.
 Pull requests are also welcome!
 
 [See our contribution guide](CONTRIBUTING.md)
+
+## Star history
+[![Star History Chart](https://api.star-history.com/svg?repos=adrenallen/ai-agents-laravel&type=Date)](https://star-history.com/#adrenallen/ai-agents-laravel&Date)
