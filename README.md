@@ -1,4 +1,4 @@
-# [You should use Laravel's official AI SDK now (click here)!](https://laravel.com/docs/master/ai-sdk)
+# [You should use Laravel's official AI SDK now (click here)!](https://laravel.com/docs/12.x/ai-sdk)
 
 
 ## This project is no longer supported
