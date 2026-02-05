@@ -1,3 +1,8 @@
+# [You should use Laravel's official AI SDK now (click here)!](https://laravel.com/docs/master/ai-sdk)
+
+
+## This project is no longer supported
+
 <img src="https://github.com/user-attachments/assets/54c1ecf7-b5b3-431f-80b1-d18bafa1a759" width="400" />
 
 [![Latest Stable Version](https://poser.pugx.org/adrenallen/ai-agents-laravel/v)](https://packagist.org/packages/adrenallen/ai-agents-laravel) [![Latest Unstable Version](https://poser.pugx.org/adrenallen/ai-agents-laravel/v/unstable)](https://packagist.org/packages/adrenallen/ai-agents-laravel)  [![License](https://poser.pugx.org/adrenallen/ai-agents-laravel/license)](https://packagist.org/packages/adrenallen/ai-agents-laravel) [![PHP Version Require](https://poser.pugx.org/adrenallen/ai-agents-laravel/require/php)](https://packagist.org/packages/adrenallen/ai-agents-laravel)
